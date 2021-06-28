@@ -21,7 +21,7 @@ Bytepath is game made by a327ex using the Löve(Love2D) Framework and Lua. a327e
 - #12 [More Passives](https://github.com/a327ex/blog/issues/26)
 - #13 [Skilltree](https://github.com/a327ex/blog/issues/27)
 - #14 [Console](https://github.com/a327ex/blog/issues/28)
--#15 [Final](https://github.com/a327ex/blog/issues/29)
+- #15 [Final](https://github.com/a327ex/blog/issues/29)
 
 
 
