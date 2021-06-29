@@ -44,7 +44,7 @@ local function requireFiles(files)
     end
 end
 
-local function printTable(t)
+function printTable(t)
     for k, v in pairs(t) do
         print(k, v)
     end

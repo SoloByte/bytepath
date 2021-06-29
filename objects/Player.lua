@@ -5,10 +5,13 @@ Player = GameObject:extend()
 function Player:new(area, x, y, opts)
     Player.super.new(self, area, x, y, opts)
     
+    self.timer:every(0.24, function () self:shoot() end)
+    self.timer:every(5, function () self:tick() end)
+    input:bind("f3", function () self:die() end)
+
     self.w, self.h = 12, 12
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.w)
     self.collider:setObject(self)
-
 
     self.r = -math.pi * 0.5 --starting angle (up)
     self.rv = 1.66 * math.pi --angle change on player input
@@ -16,20 +19,59 @@ function Player:new(area, x, y, opts)
     self.base_max_vel = 100
     self.max_vel = self.base_max_vel
     self.acc = 100
+
+    self.ship = "Fighter"
+    self.polygons = {}
+
     self.boosting = false
     self.trail_color = skill_point_color
+    
+    
+    
     self.timer:every(0.025, function ()
-        self.area:addGameObject(
-            "TrailParticle",
-            self.x - self.w * math.cos(self.r),
-            self.y - self.h * math.sin(self.r),
-            {parent = self, d = random(0.15, 0.25), r = random(4, 6), color = self.trail_color}
-        )
+        if self.ship == "Fighter" then
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - 0.9 * self.w * math.cos(self.r) + 0.2 * self.w * math.cos(self.r - math.pi / 2),
+                self.y - 0.9 * self.w * math.sin(self.r) + 0.2 * self.w * math.sin(self.r - math.pi / 2),
+                {parent = self, d = random(0.15, 0.25), r = random(4, 6), color = self.trail_color}
+            )
+
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - 0.9 * self.w * math.cos(self.r) + 0.2 * self.w * math.cos(self.r + math.pi / 2),
+                self.y - 0.9 * self.w * math.sin(self.r) + 0.2 * self.w * math.sin(self.r + math.pi / 2),
+                {parent = self, d = random(0.15, 0.25), r = random(4, 6), color = self.trail_color}
+            )
+        end
     end)
 
-    self.timer:every(0.24, function () self:shoot() end)
-    self.timer:every(5, function () self:tick() end)
-    input:bind("f3", function () self:die() end)
+    if self.ship == "Fighter" then
+        self.polygons[1] = {
+            self.w, 0, --1
+            self.w / 2, -self.w / 2, --2
+            -self.w / 2, -self.w / 2, --3
+            -self.w, 0, --4
+            -self.w / 2, self.w / 2, --5
+            self.w / 2, self.w / 2, --6
+        }
+        self.polygons[2] = {
+            self.w / 2, -self.w / 2, --1
+            0, -self.w, --2
+            -self.w - self.w / 2, -self.w, --3
+            -self.w * 0.75, -self.w * 0.25, --4
+            -self.w / 2, -self.w / 2, --5
+        }
+        self.polygons[3] = {
+            self.w / 2, self.w / 2, --1
+            0, self.w, --2
+            -self.w - self.w / 2, self.w, --3
+            -self.w * 0.75, self.w * 0.25, --4
+            -self.w / 2, self.w / 2, --5
+        }
+    end
+
+
 end
 
 
@@ -79,11 +121,27 @@ function Player:update(dt)
 end
 
 
+
 function Player:draw()
-    love.graphics.circle("fill", self.x, self.y, self.w * 0.25)
-    love.graphics.circle("line", self.x, self.y, self.w)
-    love.graphics.line(self.x, self.y, self.x + 2*self.w * math.cos(self.r), self.y + 2*self.w * math.sin(self.r))
+    pushRotate(self.x, self.y, self.r)
+    love.graphics.setColor(default_color)
+    local polycount = #self.polygons
+    for i = 1, polycount do
+        local polygon = self.polygons[i]
+        local points = fn.map(polygon, function (v, k)
+            if k % 2 == 1 then --x component
+                return self.x + v + random(-1, 1)
+            else --y component
+                return self.y + v + random(-1, 1)
+            end
+        end)
+        love.graphics.polygon("line", points)
+    end
+    love.graphics.pop()
 end
+
+
+
 
 function Player:destroy()
     Player.super.destroy(self)
