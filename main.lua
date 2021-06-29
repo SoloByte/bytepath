@@ -83,6 +83,11 @@ function love.load()
     input:bind("right", "right")
     input:bind("d", "right")
 
+    input:bind("w", "up")
+    input:bind("up", "up")
+    input:bind("s", "down")
+    input:bind("down", "down")
+
     --memory
     input:bind('f1', function()
         print("Before collection: " .. collectgarbage("count")/1024)

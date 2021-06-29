@@ -13,8 +13,19 @@ function Player:new(area, x, y, opts)
     self.r = -math.pi * 0.5 --starting angle (up)
     self.rv = 1.66 * math.pi --angle change on player input
     self.vel = 0
-    self.max_vel = 100
+    self.base_max_vel = 100
+    self.max_vel = self.base_max_vel
     self.acc = 100
+    self.boosting = false
+    self.trail_color = skill_point_color
+    self.timer:every(0.025, function ()
+        self.area:addGameObject(
+            "TrailParticle",
+            self.x - self.w * math.cos(self.r),
+            self.y - self.h * math.sin(self.r),
+            {parent = self, d = random(0.15, 0.25), r = random(4, 6), color = self.trail_color}
+        )
+    end)
 
     self.timer:every(0.24, function () self:shoot() end)
     self.timer:every(5, function () self:tick() end)
@@ -39,6 +50,21 @@ end
 
 function Player:update(dt)
     Player.super.update(self, dt)
+
+    self.boosting = false
+    self.max_vel = self.base_max_vel
+    if input:down("up") then 
+        self.boosting = true
+        self.max_vel = self.base_max_vel * 1.5 
+    end
+    if input:down("down") then 
+        self.boosting = true
+        self.max_vel = self.base_max_vel * 0.5 
+    end
+
+    self.trail_color = skill_point_color
+    if self.boosting then self.trail_color = boost_color end
+
 
     if input:down("left") then self.r = self.r - self.rv * dt end
     if input:down("right") then self.r = self.r + self.rv * dt end
