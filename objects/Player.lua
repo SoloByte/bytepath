@@ -16,7 +16,7 @@ function Player:new(area, x, y, opts)
     self.max_vel = self.base_max_vel
     self.acc = 100
 
-    self.ship_variants = {"Fighter", "Assault", "Hour"}
+    self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
     self.ship = self.ship_variants[1]
     self.polygons = {}
 
@@ -192,6 +192,39 @@ function Player:createShip(ship)
             -self.w * 1.5, self.w * 1.5, --4
             self.w * 1.5, self.w * 1.5, --5
         }
+    elseif self.ship == self.ship_variants[4] then
+        self.polygons[1] = {--center
+            0, -self.w * 0.25, --1
+            self.w, 0, --2
+            0, self.w * 0.25, --3
+
+        }
+        self.polygons[2] = {--top wing
+            self.w, -self.w * 0.25, --1
+            -self.w * 0.5, -self.w, --2
+            -self.w, -self.w * 0.75, --3
+        }
+        self.polygons[3] = {--bottom wing
+            self.w, self.w * 0.25, --1
+            -self.w, self.w * 0.75, --2
+            -self.w * 0.5, self.w, --3
+        }
+    elseif self.ship == self.ship_variants[5] then
+        self.polygons[1] = {
+            self.w, 0, --1
+            -self.w * 0.5, -self.w, --2
+            -self.w, -self.w * 0.5, --3
+            -self.w, self.w * 0.5, --4
+            -self.w * 0.5, self.w, --5
+        }
+    elseif self.ship == self.ship_variants[6] then
+        self.polygons[1] = {
+            self.w, 0, --1
+            self.w * 0.5, -self.w * 0.5, --2
+            -self.w, -self.w * 0.5, --3
+            -self.w, self.w * 0.5, --4
+            self.w * 0.5, self.w * 0.5, --5
+        }
     end
 end
 
@@ -243,6 +276,39 @@ function Player:createTrail(ship)
             )
         end)
     
+    elseif self.ship == self.ship_variants[4] then
+
+        self.timer:every("playertrail", 0.02, function ()
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - 0.9 * self.w * math.cos(self.r),
+                self.y - 0.9 * self.w * math.sin(self.r),
+                {parent = self, d = random(0.05, 0.15), r = random(6, 9), color = self.trail_color}
+            )
+        end)
+    
+    elseif self.ship == self.ship_variants[5] then
+    
+        self.timer:every("playertrail", 0.02, function ()
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - 0.9 * self.w * math.cos(self.r),
+                self.y - 0.9 * self.w * math.sin(self.r),
+                {parent = self, d = random(0.15, 0.3), r = random(3, 5), color = self.trail_color}
+            )
+        end)
+    
+    elseif self.ship == self.ship_variants[6] then
+    
+        self.timer:every("playertrail", 0.02, function ()
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - 0.9 * self.w * math.cos(self.r),
+                self.y - 0.9 * self.w * math.sin(self.r),
+                {parent = self, d = random(0.2, 0.25), r = random(2, 3), color = self.trail_color}
+            )
+        end)
+
     end
 end
 

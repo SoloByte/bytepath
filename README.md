@@ -1,7 +1,7 @@
 # Bytepath Love2D Game Tutorial
 
 
-Bytepath is game made by a327ex using the Löve(Love2D) Framework and Lua. a327ex made a serial of blog posts showing the detailed development of Bytepath. I am following his tutorial to learn about the Love2D Framework and Lua.
+Bytepath is game made by a327ex using the Löve(Love2D) Framework and Lua. a327ex made a series of blog posts showing the detailed development of Bytepath. I am following his tutorial to learn about the Love2D Framework and Lua.
 
 
 ## Tutorial Posts
