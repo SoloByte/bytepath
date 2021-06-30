@@ -5,7 +5,7 @@ Projectile = GameObject:extend()
 
 function Projectile:new(area, x, y, opts)
     Projectile.super.new(self, area, x, y, opts)
-
+    self.depth = 60
     self.s = opts.s or 2.5
     self.v = opts.v or 200
 
