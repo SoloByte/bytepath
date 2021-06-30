@@ -7,7 +7,7 @@ Timer = require "libs.enhanced-timer.EnhancedTimer"
 fn = require "libs.moses.moses"
 Camera = require "libs.hump.camera"
 Physics = require "libs.windfield"
-Draft = require("libs.draft.draft")()
+draft = require("libs.draft.draft")()
 
 require "GameObject"
 require "utils"

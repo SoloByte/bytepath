@@ -6,7 +6,9 @@ function Stage:new()
     self.area:addPhysicsWorld()
     self.main_canvas = love.graphics.newCanvas(gw, gh)
 
-
+    input:bind("1", function ()
+        self.area:addGameObject("Ammo", random(25, gw - 25), random(25, gh - 25))
+    end)
     --[[
     for i = 1, 100 do
         local x = love.math.random(gw)
