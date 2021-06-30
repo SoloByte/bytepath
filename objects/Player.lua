@@ -16,6 +16,19 @@ function Player:new(area, x, y, opts)
     self.max_vel = self.base_max_vel
     self.acc = 100
 
+    self.max_hp = 100
+    self.hp = self.max_hp
+
+    self.max_ammo = 100
+    self.ammo = self.max_ammo
+
+    self.max_boost = 100
+    self.boost = self.max_boost
+    self.can_boost = true
+    self.boost_timer = 0
+    self.boost_cooldown = 2
+
+
     self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
     self.ship = self.ship_variants[1]
     self.polygons = {}
@@ -54,15 +67,34 @@ end
 function Player:update(dt)
     Player.super.update(self, dt)
 
+    self.boost = math.min(self.boost + 10 * dt, self.max_boost)
+    if not self.can_boost then
+        self.boost_timer = self.boost_timer + dt
+        if self.boost_timer > self.boost_cooldown then
+            self.can_boost = true
+            self.boost_timer = 0
+        end
+    end
+
+
     self.boosting = false
     self.max_vel = self.base_max_vel
-    if input:down("up") then 
+    if input:down("up") and self.boost > 1 and self.can_boost then 
         self.boosting = true
         self.max_vel = self.base_max_vel * 1.5 
     end
-    if input:down("down") then 
+    if input:down("down") and self.boost > 1 and self.can_boost then 
         self.boosting = true
         self.max_vel = self.base_max_vel * 0.5 
+    end
+
+    if self.boosting then
+        self.boost = self.boost - 50 * dt
+        if self.boost <= 1 then
+            self.can_boost = false
+            self.boost_timer = 0
+            self.boosting = false
+        end
     end
 
     self.trail_color = skill_point_color
