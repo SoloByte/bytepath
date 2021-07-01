@@ -8,7 +8,7 @@ function Player:new(area, x, y, opts)
     self.w, self.h = 12, 12
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.w)
     self.collider:setObject(self)
-
+    self.collider:setCollisionClass("Player")
     self.r = -math.pi * 0.5 --starting angle (up)
     self.rv = 1.66 * math.pi --angle change on player input
     self.vel = 0
@@ -64,9 +64,22 @@ function Player:tick()
     self.area:addGameObject("TickEffect", self.x, self.y, {parent = self})
 end
 
+function Player:addAmmo(amount)
+    self.ammo = math.min(self.ammo + amount, self.max_ammo)
+end
+
 function Player:update(dt)
     Player.super.update(self, dt)
 
+
+    if self.collider:enter("Collectable") then
+        local col_info = self.collider:getEnterCollisionData("Collectable")
+        local object = col_info.collider:getObject()
+        if object:is(Ammo) then
+            object:die()
+            self:addAmmo(5)
+        end
+    end
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)
     if not self.can_boost then
         self.boost_timer = self.boost_timer + dt

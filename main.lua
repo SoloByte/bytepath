@@ -8,6 +8,7 @@ fn = require "libs.moses.moses"
 Camera = require "libs.hump.camera"
 Physics = require "libs.windfield"
 draft = require("libs.draft.draft")()
+Vector = require "libs.hump.vector"
 
 require "GameObject"
 require "utils"
@@ -15,7 +16,7 @@ require "globals"
 
 
 local flash_frames = nil
-local current_room = nil
+current_room = nil
 
 
 local function recursiveEnumerator(folder, file_list)

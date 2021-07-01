@@ -4,19 +4,16 @@ Stage = Object:extend()
 function Stage:new()
     self.area = Area(self)
     self.area:addPhysicsWorld()
+    self.area.world:addCollisionClass("Player")
+    self.area.world:addCollisionClass("Projectile", {ignores = {"Projectile"}})
+    self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "Collectable"}})
     self.main_canvas = love.graphics.newCanvas(gw, gh)
 
     input:bind("1", function ()
         self.area:addGameObject("Ammo", random(25, gw - 25), random(25, gh - 25))
     end)
-    --[[
-    for i = 1, 100 do
-        local x = love.math.random(gw)
-        local y = love.math.random(gh)
-        self.area:addGameObject("Player", x, y)
-    end
-    --]]
-    self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
+
+    self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
     
     --[[
     input:bind("f4", function ()
