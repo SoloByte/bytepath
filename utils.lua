@@ -11,6 +11,9 @@ function UUID()
 end
 
 
+function table.random(t)
+    return t[love.math.random(1, #t)]
+end
 
 function random(min, max)
     local min, max = min or 0, max or 1

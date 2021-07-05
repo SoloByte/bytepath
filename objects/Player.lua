@@ -78,6 +78,8 @@ function Player:update(dt)
         if object:is(Ammo) then
             object:die()
             self:addAmmo(5)
+        elseif object:is(Boost) then
+            object:die()
         end
     end
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)
