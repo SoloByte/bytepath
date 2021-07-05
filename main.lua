@@ -10,6 +10,7 @@ Physics = require "libs.windfield"
 draft = require("libs.draft.draft")()
 Vector = require "libs.hump.vector"
 
+require "libs.utf8"
 require "GameObject"
 require "utils"
 require "globals"
@@ -18,39 +19,6 @@ require "globals"
 local flash_frames = nil
 current_room = nil
 
-
-local function recursiveEnumerator(folder, file_list)
-    local items = love.filesystem.getDirectoryItems(folder)
-
-    for _, item in ipairs(items) do
-        local file = folder .. "/" .. item
-        local info = love.filesystem.getInfo(file)
-        if info.type == "file" then
-            table.insert(file_list, file)
-        elseif info.type == "directory" then
-            recursiveEnumerator(file, file_list)
-        end
-
-        --if love.filesystem.isFile(file) then
-        --    table.insert(file_list, file)
-        --elseif love.filesystem.isDirectory(file) then
-        --    recursiveEnumerator(file, file_list)
-        --end
-    end
-end
-
-local function requireFiles(files)
-    for _, file in ipairs(files) do
-        local file = file:sub(1, -5)
-        require(file)
-    end
-end
-
-function printTable(t)
-    for k, v in pairs(t) do
-        print(k, v)
-    end
-end
 
 
 function resize(s)
@@ -64,6 +32,7 @@ function love.load()
     love.graphics.setDefaultFilter("nearest")
     love.graphics.setLineStyle("rough")
 
+    loadFonts("resources/fonts")
     local object_files = {}
     recursiveEnumerator("objects", object_files)
     requireFiles(object_files)
@@ -124,7 +93,6 @@ function love.update(dt)
 end
 
 
-
 function love.draw()
     if current_room then current_room:draw() end
 
@@ -160,6 +128,55 @@ end
 function flash(frames)
     flash_frames = frames
 end
+
+function recursiveEnumerator(folder, file_list)
+    local items = love.filesystem.getDirectoryItems(folder)
+
+    for _, item in ipairs(items) do
+        local file = folder .. "/" .. item
+        local info = love.filesystem.getInfo(file)
+        if info.type == "file" then
+            table.insert(file_list, file)
+        elseif info.type == "directory" then
+            recursiveEnumerator(file, file_list)
+        end
+
+        --if love.filesystem.isFile(file) then
+        --    table.insert(file_list, file)
+        --elseif love.filesystem.isDirectory(file) then
+        --    recursiveEnumerator(file, file_list)
+        --end
+    end
+end
+
+function requireFiles(files)
+    for _, file in ipairs(files) do
+        local file = file:sub(1, -5)
+        require(file)
+    end
+end
+
+function printTable(t)
+    for k, v in pairs(t) do
+        print(k, v)
+    end
+end
+
+function loadFonts(path)
+    fonts = {}
+    local font_paths = {}
+    recursiveEnumerator(path, font_paths)
+    for i = 8, 16, 1 do
+        for _, font_path in pairs(font_paths) do
+            local last_forward_slash_index = font_path:find("/[^/]*$")
+            local font_name = font_path:sub(last_forward_slash_index+1, -5)
+            local font = love.graphics.newFont(font_path, i)
+            font:setFilter('nearest', 'nearest')
+            fonts[font_name .. '_' .. i] = font
+        end
+    end
+end
+
 -- Memory -----------------------------
 function count_all(f)
     local seen = {}
