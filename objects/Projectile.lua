@@ -8,7 +8,7 @@ function Projectile:new(area, x, y, opts)
     self.depth = 60
     self.s = opts.s or 2.5
     self.v = opts.v or 200
-
+    self.color = attacks[self.attack].color
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.s)
     self.collider:setObject(self)
     self.collider:setCollisionClass("Projectile")
@@ -27,8 +27,17 @@ function Projectile:update(dt)
 end
 
 function Projectile:draw()
+    pushRotate(self.x, self.y, Vector(self.collider:getLinearVelocity()):angleTo())
+    love.graphics.setLineWidth(self.s - self.s * 0.25)
+    
+    love.graphics.setColor(self.color)
+    love.graphics.line(self.x, self.y, self.x + 2 * self.s, self.y)
+    
     love.graphics.setColor(default_color)
-    love.graphics.circle("line", self.x, self.y, self.s)
+    love.graphics.line(self.x - 2 * self.s, self.y, self.x, self.y)
+
+    love.graphics.setLineWidth(1)
+    love.graphics.pop()
 end
 
 function Projectile:destroy()

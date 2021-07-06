@@ -15,3 +15,9 @@ negative_colors = {
     {1.0 - skill_point_color[1], 1.0 - skill_point_color[2], 1.0 - skill_point_color[3]},
 }
 all_colors = fn.append(default_colors, negative_colors)
+
+
+attacks = {
+    ["Neutral"] = {cooldown = 0.24, ammo = 0, abbrevation = "N", color = default_color},
+    ["Double"] = {cooldown = 0.32, ammo = 2, abbrevation = "2", color = ammo_color},
+}

@@ -40,7 +40,7 @@ function Player:new(area, x, y, opts)
     
     self:changeShip(self.ship)
 
-    self.timer:every(0.24, function () self:shoot() end)
+    --self.timer:every(0.24, function () self:shoot() end)
     self.timer:every(5, function () self:tick() end)
     input:bind("f3", function () self:die() end)
     input:bind("f4", function ()
@@ -48,6 +48,8 @@ function Player:new(area, x, y, opts)
         local ship = self.ship_variants[index]
         self:changeShip(ship)
     end)
+
+    self:setAttack("Double")
 end
 
 
@@ -57,17 +59,40 @@ function Player:shoot()
     local sin = math.sin(self.r)
     self.area:addGameObject("ShootEffect", self.x + d * cos, self.y + d * sin, {player = self, d = d})
 
-    d = d * 1.5
-    self.area:addGameObject("Projectile", self.x + d * cos, self.y + d * sin, {r = self.r})
+    if self.attack == "Neutral" then
+        d = d * 1.5
+        self.area:addGameObject("Projectile", self.x + d * cos, self.y + d * sin, {r = self.r, attack = self.attack})
+    elseif self.attack == "Double" then
+        d = d * 1.5
 
+        self.area:addGameObject('Projectile', 
+    	self.x + d*math.cos(self.r + math.pi/12), 
+    	self.y + d*math.sin(self.r + math.pi/12), 
+    	{r = self.r + math.pi/12, attack = self.attack})
+        
+        self.area:addGameObject('Projectile', 
+    	self.x + d*math.cos(self.r - math.pi/12),
+    	self.y + d*math.sin(self.r - math.pi/12), 
+    	{r = self.r - math.pi/12, attack = self.attack})
+    end
+
+    self:addAmmo(-attacks[self.attack].ammo)
 end
+
+        
 
 function Player:tick()
     self.area:addGameObject("TickEffect", self.x, self.y, {parent = self})
 end
 
 function Player:addAmmo(amount)
-    self.ammo = clamp(self.ammo + amount, 0, self.max_ammo)
+    self.ammo = self.ammo + amount
+    if self.ammo > self.max_ammo then
+        self.ammo = self.max_ammo
+    elseif self.ammo <= 0 then
+        self:setAttack("Neutral")
+    end
+    --self.ammo = clamp(self.ammo + amount, 0, self.max_ammo)
 end
 
 function Player:addBoost(amount)
@@ -101,6 +126,14 @@ function Player:update(dt)
             SP = SP + 1
         end
     end
+
+
+    self.shoot_timer = self.shoot_timer + dt
+    if self.shoot_timer > self.shoot_cooldown then
+        self.shoot_timer = 0
+        self:shoot()
+    end
+
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)
     if not self.can_boost then
         self.boost_timer = self.boost_timer + dt
@@ -188,6 +221,12 @@ function Player:die()
 end
 
 
+function Player:setAttack(attack)
+    self.attack = attack
+    self.shoot_cooldown = attacks[attack].cooldown
+    self.ammo = self.max_ammo
+    self.shoot_timer = 0
+end
 
 function Player:changeShip(new_ship)
     self.ship = new_ship
