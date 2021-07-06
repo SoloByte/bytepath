@@ -49,19 +49,27 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Double")
+    self:setAttack("Side")
 end
 
 
 function Player:shoot()
     local d = self.w * 1.2
-    local cos = math.cos(self.r)
-    local sin = math.sin(self.r)
-    self.area:addGameObject("ShootEffect", self.x + d * cos, self.y + d * sin, {player = self, d = d})
+
+    self.area:addGameObject("ShootEffect", 
+    self.x + d * math.cos(self.r), 
+    self.y + d * math.sin(self.r), 
+    {player = self, d = d})
+
 
     if self.attack == "Neutral" then
         d = d * 1.5
-        self.area:addGameObject("Projectile", self.x + d * cos, self.y + d * sin, {r = self.r, attack = self.attack})
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
+
     elseif self.attack == "Double" then
         d = d * 1.5
 
@@ -74,6 +82,77 @@ function Player:shoot()
     	self.x + d*math.cos(self.r - math.pi/12),
     	self.y + d*math.sin(self.r - math.pi/12), 
     	{r = self.r - math.pi/12, attack = self.attack})
+    
+    elseif self.attack == "Triple" then
+        d = d * 1.5
+
+        self.area:addGameObject('Projectile', 
+    	self.x + d*math.cos(self.r + math.pi/12), 
+    	self.y + d*math.sin(self.r + math.pi/12), 
+    	{r = self.r + math.pi/12, attack = self.attack})
+        
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
+
+        self.area:addGameObject('Projectile', 
+    	self.x + d*math.cos(self.r - math.pi/12),
+    	self.y + d*math.sin(self.r - math.pi/12), 
+    	{r = self.r - math.pi/12, attack = self.attack})
+
+
+    elseif self.attack == "Spread" then
+        d = d * 1.5
+        local max_angle = math.pi / 8
+        local rand_angle = random(-max_angle, max_angle)
+        local accuracy = self.r + rand_angle
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(accuracy), 
+        self.y + d * math.sin(accuracy), 
+        {r = accuracy, attack = self.attack})
+
+    elseif self.attack == "Rapid" then
+        d = d * 1.5
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
+
+    elseif self.attack == "Back" then
+        d = d * 1.5
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r + math.pi), 
+        self.y + d * math.sin(self.r + math.pi), 
+        {r = self.r + math.pi, attack = self.attack})
+
+    elseif self.attack == "Side" then
+
+        d = d * 1.5
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r + math.pi * 0.5), 
+        self.y + d * math.sin(self.r + math.pi * 0.5), 
+        {r = self.r + math.pi * 0.5, attack = self.attack})
+
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r - math.pi * 0.5), 
+        self.y + d * math.sin(self.r - math.pi * 0.5), 
+        {r = self.r - math.pi * 0.5, attack = self.attack})
+    
     end
 
     self:addAmmo(-attacks[self.attack].ammo)

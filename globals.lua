@@ -20,4 +20,9 @@ all_colors = fn.append(default_colors, negative_colors)
 attacks = {
     ["Neutral"] = {cooldown = 0.24, ammo = 0, abbrevation = "N", color = default_color},
     ["Double"] = {cooldown = 0.32, ammo = 2, abbrevation = "2", color = ammo_color},
+    ["Triple"] = {cooldown = 0.32, ammo = 3, abbrevation = "3", color = boost_color},
+    ["Spread"] = {cooldown = 0.16, ammo = 2, abbrevation = "RS", color = default_color},
+    ["Rapid"] = {cooldown = 0.12, ammo = 1, abbrevation = "R", color = default_color},
+    ["Back"] = {cooldown = 0.32, ammo = 2, abbrevation = "Ba", color = skill_point_color},
+    ["Side"] = {cooldown = 0.32, ammo = 2, abbrevation = "Si", color = boost_color},
 }
