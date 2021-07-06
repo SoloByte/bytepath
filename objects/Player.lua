@@ -49,7 +49,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Side")
+    self:setAttack("Neutral")
 end
 
 
@@ -203,6 +203,9 @@ function Player:update(dt)
         elseif object:is(Skillpoint) then
             object:die()
             SP = SP + 1
+        elseif object:is(Attack) then
+            object:die()
+            self:setAttack(object.attack)
         end
     end
 

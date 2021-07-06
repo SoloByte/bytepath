@@ -91,7 +91,10 @@ function InfoText:draw()
         end
 
         love.graphics.setColor(self.foreground_colors[i] or self.color or default_color)
-        love.graphics.print(self.characters[i], self.x + width, self.y, 0, 1, 1, 0, self.font:getHeight() * 0.5)
+        love.graphics.print(self.characters[i], 
+        math.floor(self.x + width), 
+        math.floor(self.y), 
+        0, 1, 1, 0, self.font:getHeight() * 0.5)
     end
 
     love.graphics.setColor(default_color)

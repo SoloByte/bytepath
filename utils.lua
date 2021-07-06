@@ -20,6 +20,14 @@ function table.random(t)
     return t[love.math.random(1, #t)]
 end
 
+function table.keys(t)
+    local keys = {}
+    for k,v in pairs(t) do
+        table.insert(keys, k)
+    end
+    return keys
+end
+
 function random(min, max)
     local min, max = min or 0, max or 1
     return (min > max and (love.math.random()*(min - max) + max)) or (love.math.random()*(max - min) + min)
