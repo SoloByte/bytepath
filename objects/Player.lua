@@ -1,6 +1,8 @@
 Player = GameObject:extend()
 
 
+SP = 0
+
 
 function Player:new(area, x, y, opts)
     Player.super.new(self, area, x, y, opts)
@@ -91,6 +93,9 @@ function Player:update(dt)
         elseif object:is(Boost) then
             object:die()
             self:addBoost(25)
+        elseif object:is(HP) then
+            object:die()
+            self:addHP(25)
         end
     end
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)

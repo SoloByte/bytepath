@@ -17,6 +17,10 @@ function Stage:new()
         self.area:addGameObject("Boost", random(25, gw - 25), random(25, gh - 25))
     end)
 
+    input:bind("3", function ()
+        self.area:addGameObject("HP", random(25, gw - 25), random(25, gh - 25))
+    end)
+
     self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
     
     --[[
