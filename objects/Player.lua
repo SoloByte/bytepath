@@ -96,6 +96,9 @@ function Player:update(dt)
         elseif object:is(HP) then
             object:die()
             self:addHP(25)
+        elseif object:is(Skillpoint) then
+            object:die()
+            SP = SP + 1
         end
     end
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)
