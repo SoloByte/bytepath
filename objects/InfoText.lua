@@ -5,26 +5,34 @@ function InfoText:new(area, x,y,opts)
     InfoText.super.new(self,area,x,y,opts)
     self.depth = 80
 
-    --test pos randomization (boost.lua sets w and h)
-    self.w, self.h = self.w or 0, self.h or 0
-    self.x, self.y = self.x + random(-self.w, self.w), self.y + random(-self.h, self.h)
 
+    self.font = fonts.m5x7_16
+    self.w, self.h = self.font:getWidth(self.text), self.font:getHeight()
     self.characters = {}
     self.background_colors = {}
     self.foreground_colors = {}
     for i = 1, #self.text do table.insert(self.characters, self.text:utf8sub(i, i)) end
     self.char_count = #self.characters
-    self.font = fonts.m5x7_16
 
-    local default_colors = {default_color, hp_color, boost_color, ammo_color, skill_point_color}
-    local negative_colors = {
-        {1.0 - default_color[1], 1.0 - default_color[2], 1.0 - default_color[3]},
-        {1.0 - hp_color[1], 1.0 - hp_color[2], 1.0 - hp_color[3]},
-        {1.0 - boost_color[1], 1.0 - boost_color[2], 1.0 - boost_color[3]},
-        {1.0 - ammo_color[1], 1.0 - ammo_color[2], 1.0 - ammo_color[3]},
-        {1.0 - skill_point_color[1], 1.0 - skill_point_color[2], 1.0 - skill_point_color[3]},
-    }
-    self.all_colors = fn.append(default_colors, negative_colors)
+
+    local other_info_texts = self.area:getAllGameObjectsThat(function (o) if o:is(InfoText) and o.id ~= self.id then return true end end)
+    
+    local collidesWithOtherInfoText = function ()
+        
+        for i = 1, #other_info_texts do
+            local other = other_info_texts[i]
+            local col = overlapRectangles(self.x, self.y, self.w, self.h, other.x, other.y, other.w, other.h)
+            if col then return true end
+        end
+
+        return false
+    end
+
+    while collidesWithOtherInfoText() do
+        self.x = self.x + table.random({-1, 0, 1}) * self.w
+        self.y = self.y + table.random({-1, 0, 1}) * self.h
+    end
+    
 
     self.visible = true
     self.timer:after(0.70, function()
@@ -41,13 +49,13 @@ function InfoText:new(area, x,y,opts)
                 end
 
                 if love.math.random(1, 10) <= 1 then
-                    self.background_colors[i] = table.random(self.all_colors)
+                    self.background_colors[i] = table.random(all_colors)
                 else
                     self.background_colors[i] = nil
                 end
 
                 if love.math.random(1, 10) <= 2 then
-                    self.foreground_colors[i] = table.random(self.all_colors)
+                    self.foreground_colors[i] = table.random(all_colors)
                 else
                     self.foreground_colors[i] = nil
                 end

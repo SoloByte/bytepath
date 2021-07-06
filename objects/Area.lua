@@ -49,7 +49,15 @@ function Area:destroy()
     end
 end
 
-
+function Area:getAllGameObjectsThat(filter)
+    local out = {}
+    local count = #self.game_objects
+    for i = 1, count do
+        local go = self.game_objects[i]
+        if filter(go) then table.insert(out, go) end
+    end
+    return out
+end
 function Area:addGameObject(game_object_type, x, y, opts)
     local opts = opts or {}
     local game_object = _G[game_object_type](self, x or 0, y or 0, opts)
