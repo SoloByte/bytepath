@@ -5,7 +5,7 @@ function Stage:new()
     self.area = Area(self)
     self.area:addPhysicsWorld()
     self.area.world:addCollisionClass("Player")
-    self.area.world:addCollisionClass("Projectile", {ignores = {"Projectile"}})
+    self.area.world:addCollisionClass("Projectile", {ignores = {"Projectile", "Player"}})
     self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "Collectable"}})
     self.main_canvas = love.graphics.newCanvas(gw, gh)
 

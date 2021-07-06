@@ -1,6 +1,11 @@
 
 
 
+function clamp(v, min, max)
+    return math.max(math.min(v, max), min)
+end
+
+
 function UUID()
     local fn = function(x)
         local r = love.math.random(16) - 1

@@ -65,8 +65,18 @@ function Player:tick()
 end
 
 function Player:addAmmo(amount)
-    self.ammo = math.min(self.ammo + amount, self.max_ammo)
+    self.ammo = clamp(self.ammo + amount, 0, self.max_ammo)
 end
+
+function Player:addBoost(amount)
+    self.boost = clamp(self.boost + amount, 0, self.max_boost)
+end
+
+function Player:addHP(amount)
+    self.hp = clamp(self.hp + amount, 0, self.max_hp)
+end
+
+
 
 function Player:update(dt)
     Player.super.update(self, dt)
@@ -80,6 +90,7 @@ function Player:update(dt)
             self:addAmmo(5)
         elseif object:is(Boost) then
             object:die()
+            self:addBoost(25)
         end
     end
     self.boost = math.min(self.boost + 10 * dt, self.max_boost)
