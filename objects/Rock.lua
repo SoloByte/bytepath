@@ -60,6 +60,7 @@ end
 
 function Rock:die()
     self.dead = true
-    --self.area:addGameObject("BoostEffect", self.x, self.y, {color = boost_color, w = self.w, h = self.h})
+    self.area:addGameObject("Ammo", self.x, self.y)
+    self.area:addGameObject("EnemyDeathEffect", self.x, self.y, {color = hp_color, w = self.w * 3})
     --self.area:addGameObject("InfoText", self.x, self.y, {text = "+Rock", color = boost_color, w = self.w, h = self.h})
 end
