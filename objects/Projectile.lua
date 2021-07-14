@@ -8,6 +8,7 @@ function Projectile:new(area, x, y, opts)
     self.depth = 60
     self.s = opts.s or 2.5
     self.v = opts.v or 200
+    self.damage = opts.damage or 100
     self.color = attacks[self.attack].color
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.s)
     self.collider:setObject(self)
@@ -23,6 +24,15 @@ function Projectile:update(dt)
 
     if self:checkBounds() then
         self:die()
+    end
+
+    if self.collider:enter("Enemy") then
+        local col_info = self.collider:getEnterCollisionData("Enemy")
+        local object = col_info.collider:getObject()
+        if object:is(Rock) then
+            object:hit(self.damage)
+            self:die()
+        end
     end
 end
 

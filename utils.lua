@@ -33,7 +33,22 @@ function random(min, max)
     return (min > max and (love.math.random()*(min - max) + max)) or (love.math.random()*(max - min) + min)
 end
 
+function createIrregularPolygon(size, point_amount)
+    local point_amount = point_amount or 8
 
+    local points = {}
+    local angle_step = (2.0 * math.pi) / point_amount
+    for i = 1, point_amount do
+        local current_angle = (i - 1) * angle_step 
+        local rand_angle = current_angle + random(-angle_step * 0.25, angle_step * 0.25)
+        local rand_size = size + random(-size * 0.25, size * 0.25)
+        local x = rand_size * math.cos(rand_angle)
+        local y = rand_size * math.sin(rand_angle)
+        table.insert(points, x)
+        table.insert(points, y)
+    end
+    return points
+end
 
 function pushRotate(x, y, r)
     love.graphics.push()

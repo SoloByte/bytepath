@@ -24,6 +24,9 @@ function Player:new(area, x, y, opts)
     self.max_ammo = 100
     self.ammo = self.max_ammo
 
+    self.invincible = false
+    self.invisible = false
+
     self.max_boost = 100
     self.boost = self.max_boost
     self.can_boost = true
@@ -180,9 +183,41 @@ end
 
 function Player:addHP(amount)
     self.hp = clamp(self.hp + amount, 0, self.max_hp)
+
+    if self.hp <= 0 then
+        self:die()
+    end
 end
 
+function Player:hit(damage, pos_x, pos_y)
+    if self.invincible then return end
+    local dmg = damage or 10
+    local x = pos_x or self.x
+    local y = pos_y or self.y
 
+    if dmg < self.hp then 
+        self:spawnParticles(4, 8, x, y) 
+
+        if dmg >= 30 then
+            self.invincible = true
+            self.timer:after(2, function () self.invincible = false end)
+            self.timer:every(0.04, function ()
+                self.invisible = not self.invisible
+                if not self.invincible then self.invisible = false end
+                return self.invincible 
+            end)
+
+            flash(3)
+            camera:shake(6, 60, 0.2)
+            slow(0.25, 0.5)
+        else
+            flash(2)
+            camera:shake(6, 60, 0.1)
+            slow(0.75, 0.25)
+        end
+    end
+    self:addHP(-dmg)
+end
 
 function Player:update(dt)
     Player.super.update(self, dt)
@@ -206,6 +241,12 @@ function Player:update(dt)
         elseif object:is(Attack) then
             object:die()
             self:setAttack(object.attack)
+        end
+    elseif self.collider:enter("Enemy") then
+        local col_info = self.collider:getEnterCollisionData("Enemy")
+        local object = col_info.collider:getObject()
+        if object:is(Rock) then
+            self:hit(30)
         end
     end
 
@@ -265,6 +306,8 @@ end
 
 
 function Player:draw()
+    if self.invisible then return end
+
     pushRotate(self.x, self.y, self.r)
     love.graphics.setColor(default_color)
     local polycount = #self.polygons
@@ -292,9 +335,10 @@ end
 function Player:die()
     self.dead = true
 
-    for i = 1, love.math.random(8, 12) do
-        self.area:addGameObject("ExplodeParticle", self.x, self.y)
-    end
+    self:spawnParticles()
+    --for i = 1, love.math.random(8, 12) do
+    --    self.area:addGameObject("ExplodeParticle", self.x, self.y)
+    --end
 
     flash(6)
     camera:shake(6, 60, 0.4)
@@ -302,7 +346,15 @@ function Player:die()
 
 end
 
-
+function Player:spawnParticles(min_amount, max_amount, pos_x, pos_y)
+    local min = min_amount or 8
+    local max = max_amount or 12
+    local x = pos_x or self.x
+    local y = pos_y or self.y
+    for i = 1, love.math.random(min, max) do
+        self.area:addGameObject("ExplodeParticle", x, y)
+    end
+end
 function Player:setAttack(attack)
     self.attack = attack
     self.shoot_cooldown = attacks[attack].cooldown
