@@ -247,6 +247,8 @@ function Player:update(dt)
         local object = col_info.collider:getObject()
         if object:is(Rock) then
             self:hit(30)
+        elseif object:is(Shooter) then
+            self:hit(20)
         end
     end
 

@@ -8,7 +8,7 @@ function Stage:new()
     self.area.world:addCollisionClass("Enemy")
     self.area.world:addCollisionClass("Projectile", {ignores = {"Projectile", "Player"}})
     self.area.world:addCollisionClass("EnemyProjectile", {ignores = {"EnemyProjectile", "Projectile", "Enemy"}})
-    self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "Collectable"}})
+    self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "EnemyProjectile", "Collectable", "Enemy"}})
     self.main_canvas = love.graphics.newCanvas(gw, gh)
 
     input:bind("1", function ()
@@ -33,6 +33,10 @@ function Stage:new()
 
     input:bind("6", function ()
         self.area:addGameObject("Rock", random(25, gw - 25), random(25, gh - 25))
+    end)
+
+    input:bind("7", function ()
+        self.area:addGameObject("Shooter", random(25, gw - 25), random(25, gh - 25))
     end)
 
     self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)

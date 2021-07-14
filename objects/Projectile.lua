@@ -29,10 +29,12 @@ function Projectile:update(dt)
     if self.collider:enter("Enemy") then
         local col_info = self.collider:getEnterCollisionData("Enemy")
         local object = col_info.collider:getObject()
-        if object:is(Rock) then
-            object:hit(self.damage)
-            self:die()
-        end
+        object:hit(self.damage)
+        self:die()
+        --if object:is(Rock) then
+            --object:hit(self.damage)
+            --self:die()
+        --end
     end
 end
 
