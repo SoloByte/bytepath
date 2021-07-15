@@ -7,11 +7,10 @@ function TargetParticle:new(area, x, y, opts)
     self.depth = 75
 
     self.r = opts.r or random(2, 3)
-
     self.timer:tween(
         opts.d or random(0.1, 0.3), 
         self, 
-        {r = 0, x = self.target_x, self.target_y},
+        {r = 0, x = self.target_x, y = self.target_y},
         "out-cubic",
         function ()
             self.dead = true

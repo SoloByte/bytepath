@@ -31,9 +31,21 @@ function Shooter:new(area, x,y,opts)
     self.hp = 100
 
     self.timer:every(random(3, 5), function ()
-        -- spawn effect 
+        local angle = self.collider:getAngle()
+        self.area:addGameObject(
+            "PreAttackEffect",
+            self.x + 1.4 * self.w * math.cos(angle),
+            self.y + 1.4 * self.w * math.sin(angle),
+            {shooter = self, color = hp_color, duration = 1}
+        )
         self.timer:after(1.0, function ()
-            --spawn projectile
+            local angle = self.collider:getAngle()
+
+            self.area:addGameObject("EnemyProjectile", 
+            self.x + 1.4 * self.w * math.cos(angle),
+            self.y + 1.4 * self.w * math.sin(angle), 
+            {r = math.atan2(current_room.player.y - self.y, current_room.player.x - self.x), 
+            v = random(80, 100), s = 3.5})
         end)
     end)
 

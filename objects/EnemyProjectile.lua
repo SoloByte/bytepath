@@ -29,10 +29,13 @@ function EnemyProjectile:update(dt)
     if self.collider:enter("Player") then
         local col_info = self.collider:getEnterCollisionData("Player")
         local object = col_info.collider:getObject()
-        if object:is(Player) then
-            object:hit(self.damage, self.x, self.y)
-            self:die()
-        end
+        object:hit(self.damage, self.x, self.y)
+        self:die()
+    elseif self.collider:enter("Projectile") then
+        local col_info = self.collider:getEnterCollisionData("Projectile")
+        local object = col_info.collider:getObject()
+        object:die()
+        self:die()
     end
 end
 
