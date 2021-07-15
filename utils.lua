@@ -66,6 +66,24 @@ function pushRotateScale(x, y, r, sx, sy)
 end
 
 
+function chanceList(...)
+    return {
+        chance_list = {},
+        chance_definitions = {...},
+        next = function (self)
+            if #self.chance_list == 0 then
+                for i = 1, #self.chance_definitions do
+                    local definition = self.chance_definitions[i]
+                    for v = 1, definition[2] do
+                        table.insert(self.chance_list, definition[1])
+                    end
+                end
+            end
+            return table.remove(self.chance_list, math.random(1, #self.chance_list))
+        end
+    }
+end
+
 
 function overlapRectangles(x, y, w, h, x2, y2, w2, h2)
     local left = x
