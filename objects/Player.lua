@@ -345,7 +345,7 @@ function Player:die()
     flash(6)
     camera:shake(6, 60, 0.4)
     slow(0.15, 1.0)
-
+    current_room:finish()
 end
 
 function Player:spawnParticles(min_amount, max_amount, pos_x, pos_y)
