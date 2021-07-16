@@ -33,6 +33,20 @@ function Player:new(area, x, y, opts)
     self.boost_timer = 0
     self.boost_cooldown = 2
 
+    self.cycle_timer = 0
+    self.cycle_cooldown = 5
+
+    --multipliers
+    self.hp_multiplier = 1
+    self.ammo_multiplier = 1
+    self.boost_multiplier = 1
+
+    --flats
+    self.flat_hp = 0
+    self.flat_ammo = 0
+    self.flat_boost = 0
+
+    self.ammo_gain = 0
 
     self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
     self.ship = self.ship_variants[1]
@@ -43,8 +57,6 @@ function Player:new(area, x, y, opts)
     
     self:changeShip(self.ship)
 
-    --self.timer:every(0.24, function () self:shoot() end)
-    self.timer:every(5, function () self:tick() end)
     input:bind("f3", function () self:die() end)
     input:bind("f4", function ()
         local index = math.random(#self.ship_variants)
@@ -53,8 +65,25 @@ function Player:new(area, x, y, opts)
     end)
 
     self:setAttack("Neutral")
+
+
+    --treeToPlayer(self)
+    self:setStats()
 end
 
+function Player:setStats()
+    --hp
+    self.max_hp = (self.max_hp + self.flat_hp) * self.hp_multiplier
+    self.hp = self.max_hp
+
+    --ammo
+    self.max_ammo = (self.max_ammo + self.flat_ammo) * self.ammo_multiplier
+    self.ammo = self.max_ammo
+
+    --boost
+    self.max_boost = (self.max_boost + self.flat_boost) * self.boost_multiplier
+    self.boost = self.max_boost
+end
 
 function Player:shoot()
     local d = self.w * 1.2
@@ -163,7 +192,7 @@ end
 
         
 
-function Player:tick()
+function Player:cycle()
     self.area:addGameObject("TickEffect", self.x, self.y, {parent = self})
 end
 
@@ -228,7 +257,7 @@ function Player:update(dt)
         local object = col_info.collider:getObject()
         if object:is(Ammo) then
             object:die()
-            self:addAmmo(5)
+            self:addAmmo(5 + self.ammo_gain)
             current_room:increaseScore(SCORE_POINTS.AMMO)
         elseif object:is(Boost) then
             object:die()
@@ -257,6 +286,11 @@ function Player:update(dt)
         end
     end
 
+    self.cycle_timer = self.cycle_timer + dt
+    if self.cycle_timer >= self.cycle_cooldown then
+        self.cycle_timer = 0
+        self:cycle()
+    end
 
     self.shoot_timer = self.shoot_timer + dt
     if self.shoot_timer > self.shoot_cooldown then
@@ -362,6 +396,7 @@ function Player:spawnParticles(min_amount, max_amount, pos_x, pos_y)
         self.area:addGameObject("ExplodeParticle", x, y)
     end
 end
+
 function Player:setAttack(attack)
     self.attack = attack
     self.shoot_cooldown = attacks[attack].cooldown

@@ -140,7 +140,7 @@ function Stage:drawHP()
     local x = gw * 0.5 - 52
     local y = gh - 16
     self:drawBar(x, y, 48, 4, (hp / max_hp), hp_color, 0.125)
-    self:drawText("Boost", x + 24, y - 8)
+    self:drawText("HP", x + 24, y - 8)
     self:drawText(math.floor(hp) .. "/" .. math.floor(max_hp), x + 24, y + 10)
 end
 
@@ -163,7 +163,7 @@ function Stage:drawAmmo()
 end
 
 function Stage:drawCycle()
-    local timer, duration = self.director.attack_timer, self.director.attack_duration
+    local timer, duration = self.player.cycle_timer, self.player.cycle_cooldown
     local x = gw * 0.5 + 4
     local y = gh - 16
     self:drawBar(x, y, 48, 4, 1.0 - (timer / duration), default_color, 0.125)
