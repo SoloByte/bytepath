@@ -52,11 +52,13 @@ function Director:new(stage)
         {"Side", 10},
         {"Back", 10}
     )
-    
-    self.resource_spawn_chances = chanceList({'Boost', 28}, {'HP', 14}, {'SkillPoint', 58})
+
+    self.resource_spawn_chances = chanceList({'Boost', 28}, {'HP', 14}, {'Skillpoint', 58})
 
     self:setEnemySpawnsForThisRound()
-    self.stage.area:addGameObject("Attack", random(25, gw - 25), random(25, gh - 25))
+    
+    local next_attack = self.attack_spawn_chances:next()
+    self.stage.area:addGameObject("Attack", 0, 0, {attack = next_attack})
 end
 
 
@@ -85,8 +87,7 @@ function Director:update(dt)
         if self.attack_timer <= 0 then
             self.attack_timer = self.attack_duration
             local next_attack = self.attack_spawn_chances:next()
-            print("Next Attack", next_attack)
-            self.stage.area:addGameObject(next_attack)
+            self.stage.area:addGameObject("Attack", 0, 0, {attack = next_attack})
         end
     end
 end
