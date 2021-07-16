@@ -90,5 +90,6 @@ function Shooter:die()
     self.dead = true
     self.area:addGameObject("Ammo", self.x, self.y)
     self.area:addGameObject("EnemyDeathEffect", self.x, self.y, {color = hp_color, w = self.w * 3})
+    current_room.stage:increaseScore(SCORE_POINTS.SHOOTER)
     --self.area:addGameObject("InfoText", self.x, self.y, {text = "+Shooter", color = boost_color, w = self.w, h = self.h})
 end

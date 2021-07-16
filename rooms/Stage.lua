@@ -11,6 +11,9 @@ function Stage:new()
     self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "EnemyProjectile", "Collectable", "Enemy"}})
     self.main_canvas = love.graphics.newCanvas(gw, gh)
     self.director = Director(self)
+
+    self.score = 0
+
     input:bind("1", function ()
         self.area:addGameObject("Ammo", random(25, gw - 25), random(25, gh - 25))
     end)
@@ -91,4 +94,8 @@ function Stage:finish()
     timer:after(1.0, function ()
         gotoRoom("Stage")
     end)
+end
+
+function Stage:increaseScore(amount)
+    self.score = self.score + amount
 end

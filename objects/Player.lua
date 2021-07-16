@@ -229,18 +229,23 @@ function Player:update(dt)
         if object:is(Ammo) then
             object:die()
             self:addAmmo(5)
+            current_room.stage:increaseScore(SCORE_POINTS.AMMO)
         elseif object:is(Boost) then
             object:die()
             self:addBoost(25)
+            current_room.stage:increaseScore(SCORE_POINTS.BOOST)
         elseif object:is(HP) then
             object:die()
             self:addHP(25)
+            current_room.stage:increaseScore(SCORE_POINTS.HP)
         elseif object:is(Skillpoint) then
             object:die()
             SP = SP + 1
+            current_room.stage:increaseScore(SCORE_POINTS.SKILLPOINT)
         elseif object:is(Attack) then
             object:die()
             self:setAttack(object.attack)
+            current_room.stage:increaseScore(SCORE_POINTS.ATTACK)
         end
     elseif self.collider:enter("Enemy") then
         local col_info = self.collider:getEnterCollisionData("Enemy")

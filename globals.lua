@@ -26,3 +26,14 @@ attacks = {
     ["Back"] = {cooldown = 0.32, ammo = 2, abbrevation = "Ba", color = skill_point_color},
     ["Side"] = {cooldown = 0.32, ammo = 2, abbrevation = "Si", color = boost_color},
 }
+
+
+SCORE_POINTS = {
+    AMMO =50,
+    HP = 100,
+    BOOST = 150,
+    SKILLPOINT = 250,
+    ATTACK = 500,
+    ROCK = 100,
+    SHOOTER = 150
+}
