@@ -13,6 +13,7 @@ function Stage:new()
     self.director = Director(self)
 
     self.score = 0
+    self.font = fonts.m5x7_16
 
     input:bind("1", function ()
         self.area:addGameObject("Ammo", random(25, gw - 25), random(25, gh - 25))
@@ -69,11 +70,24 @@ function Stage:draw()
     love.graphics.setCanvas(self.main_canvas)
     love.graphics.clear()
         camera:attach(0, 0, gw, gh)
-        --love.graphics.circle("line", gw * 0.5, gh * 0.5, 75)
         self.area:draw()
         camera:detach()
-    love.graphics.setCanvas()
 
+        --score
+        love.graphics.setFont(self.font)
+        love.graphics.setColor(default_color)
+        self:drawText(self.score, gw - 20, 10, "center", "center")
+        
+        --skillpoints
+        love.graphics.setColor(skill_point_color)
+        self:drawText(SP, 20, 10, "center", "center")
+
+        self:drawHP()
+        self:drawBoost()
+        self:drawAmmo()
+        self:drawCycle()
+
+    love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setBlendMode("alpha", "premultiplied")
     love.graphics.draw(self.main_canvas, 0, 0, 0, sx, sy)
@@ -98,4 +112,71 @@ end
 
 function Stage:increaseScore(amount)
     self.score = self.score + amount
+end
+
+
+function Stage:drawText(text, x, y, halign, valign)
+    local ox, oy = 0, 0
+    halign = halign or "center"
+    valign = valign or "center"
+
+    if halign == "center" then
+        ox = math.floor(self.font:getWidth(text) * 0.5)
+    elseif halign == "right" then
+        ox = math.floor(self.font:getWidth(text))
+    end
+
+    if valign == "center" then
+        oy = math.floor(self.font:getHeight() * 0.5)
+    elseif valign == "bottom" then
+        oy = math.floor(self.font:getHeight())
+    end
+
+    love.graphics.print(text, x, y, 0, 1, 1, ox, oy)
+end
+
+function Stage:drawHP()
+    local hp, max_hp = self.player.hp, self.player.max_hp
+    local x = gw * 0.5 - 52
+    local y = gh - 16
+    self:drawBar(x, y, 48, 4, (hp / max_hp), hp_color, 0.125)
+    self:drawText("Boost", x + 24, y - 8)
+    self:drawText(math.floor(hp) .. "/" .. math.floor(max_hp), x + 24, y + 10)
+end
+
+function Stage:drawBoost()
+    local boost, max_boost = self.player.boost, self.player.max_boost
+    local x = gw * 0.5 + 4
+    local y = 16
+    self:drawBar(x, y, 48, 4, (boost / max_boost), boost_color, 0.125)
+    self:drawText("Boost", x + 24, y - 8)
+    self:drawText(math.floor(boost) .. "/" .. math.floor(max_boost), x + 24, y + 10)
+end
+
+function Stage:drawAmmo()
+    local ammo, max_ammo = self.player.ammo, self.player.max_ammo
+    local x = gw * 0.5 - 52
+    local y = 16
+    self:drawBar(x, y, 48, 4, (ammo / max_ammo), ammo_color, 0.125)
+    self:drawText("Ammo", x + 24, y - 8)
+    self:drawText(math.floor(ammo) .. "/" .. math.floor(max_ammo), x + 24, y + 10)
+end
+
+function Stage:drawCycle()
+    local timer, duration = self.director.attack_timer, self.director.attack_duration
+    local x = gw * 0.5 + 4
+    local y = gh - 16
+    self:drawBar(x, y, 48, 4, 1.0 - (timer / duration), default_color, 0.125)
+    self:drawText("Cycle", x + 24, y - 8)
+    self:drawText(math.floor(timer) .. "/" .. math.floor(duration), x + 24, y + 10)
+end
+
+
+function Stage:drawBar(x, y, w, h, factor, color, color_change)
+    color_change = color_change or 0.125
+    local r, g, b = color[1], color[2], color[3]
+    love.graphics.setColor(color)
+    love.graphics.rectangle("fill", x, y, w * factor, h)
+    love.graphics.setColor(r - color_change, g - color_change, b - color_change)
+    love.graphics.rectangle("line", x, y, w, h)
 end
