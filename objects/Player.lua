@@ -40,11 +40,19 @@ function Player:new(area, x, y, opts)
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
     self.boost_multiplier = 1
+    self.attack_speed_multiplier = 1
 
     --flats
     self.flat_hp = 0
     self.flat_ammo = 0
     self.flat_boost = 0
+
+    --chances
+    self.launch_homing_projectile_on_ammo_pickup_chance = 0
+    self.regain_hp_on_ammo_pickup_chance = 0
+    self.regain_hp_on_sp_pickup_chance = 0
+    self.spawn_haste_area_on_hp_pickup_chance = 0
+    self.spawn_haste_area_on_sp_pickup_chance = 0
 
     self.ammo_gain = 0
 
@@ -69,6 +77,7 @@ function Player:new(area, x, y, opts)
 
     --treeToPlayer(self)
     self:setStats()
+    self:generateChances()
 end
 
 function Player:setStats()
@@ -85,6 +94,15 @@ function Player:setStats()
     self.boost = self.max_boost
 end
 
+function Player:generateChances()
+    self.chances = {}
+    for key, value in pairs(self) do
+        if key:find("_chance") and type(value) == "number" then
+            self.chances[key] = chanceList({true, math.ceil(value)}, {false, 100 - math.ceil(value)})
+        end
+    end
+end
+
 function Player:shoot()
     local d = self.w * 1.2
 
@@ -93,18 +111,20 @@ function Player:shoot()
     self.y + d * math.sin(self.r), 
     {player = self, d = d})
 
-
+    d = d * 1.5
     if self.attack == "Neutral" then
-        d = d * 1.5
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack})
 
+    elseif self.attack == "Homing" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
         {r = self.r, attack = self.attack})
 
     elseif self.attack == "Double" then
-        d = d * 1.5
-
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r + math.pi/12), 
     	self.y + d*math.sin(self.r + math.pi/12), 
@@ -116,8 +136,6 @@ function Player:shoot()
     	{r = self.r - math.pi/12, attack = self.attack})
     
     elseif self.attack == "Triple" then
-        d = d * 1.5
-
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r + math.pi/12), 
     	self.y + d*math.sin(self.r + math.pi/12), 
@@ -135,7 +153,6 @@ function Player:shoot()
 
 
     elseif self.attack == "Spread" then
-        d = d * 1.5
         local max_angle = math.pi / 8
         local rand_angle = random(-max_angle, max_angle)
         local accuracy = self.r + rand_angle
@@ -146,16 +163,12 @@ function Player:shoot()
         {r = accuracy, attack = self.attack})
 
     elseif self.attack == "Rapid" then
-        d = d * 1.5
-
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
         {r = self.r, attack = self.attack})
 
     elseif self.attack == "Back" then
-        d = d * 1.5
-
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
@@ -167,9 +180,6 @@ function Player:shoot()
         {r = self.r + math.pi, attack = self.attack})
 
     elseif self.attack == "Side" then
-
-        d = d * 1.5
-
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
@@ -258,6 +268,7 @@ function Player:update(dt)
         if object:is(Ammo) then
             object:die()
             self:addAmmo(5 + self.ammo_gain)
+            self:onAmmoPickup()
             current_room:increaseScore(SCORE_POINTS.AMMO)
         elseif object:is(Boost) then
             object:die()
@@ -266,10 +277,12 @@ function Player:update(dt)
         elseif object:is(HP) then
             object:die()
             self:addHP(25)
+            self:onHPPickup()
             current_room:increaseScore(SCORE_POINTS.HP)
         elseif object:is(Skillpoint) then
             object:die()
             SP = SP + 1
+            self:onSkillpointPickup()
             current_room:increaseScore(SCORE_POINTS.SKILLPOINT)
         elseif object:is(Attack) then
             object:die()
@@ -293,7 +306,7 @@ function Player:update(dt)
     end
 
     self.shoot_timer = self.shoot_timer + dt
-    if self.shoot_timer > self.shoot_cooldown then
+    if self.shoot_timer > self.shoot_cooldown * self.attack_speed_multiplier then
         self.shoot_timer = 0
         self:shoot()
     end
@@ -402,6 +415,43 @@ function Player:setAttack(attack)
     self.shoot_cooldown = attacks[attack].cooldown
     self.ammo = self.max_ammo
     self.shoot_timer = 0
+end
+
+
+
+
+function Player:onAmmoPickup()
+    if self.chances.launch_homing_projectile_on_ammo_pickup_chance:next() then
+        local d = self.w * 1.2
+        d = d * 1.5 
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = "Homing"})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+    end
+
+    if self.chances.regain_hp_on_ammo_pickup_chance:next() then
+        self:addHP(25)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!'})
+    end
+end
+
+function Player:onSkillpointPickup()
+    if self.chances.regain_hp_on_sp_pickup_chance:next() then
+        self:addHP(25)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!'})
+    end
+
+    if self.chances.spawn_haste_area_on_sp_pickup_chance:next() then
+        
+    end
+end
+
+function Player:onHPPickup()
+    if self.chances.spawn_haste_area_on_hp_pickup_chance:next() then
+        
+    end
 end
 
 function Player:changeShip(new_ship)

@@ -14,13 +14,56 @@ function Projectile:new(area, x, y, opts)
     self.collider:setObject(self)
     self.collider:setCollisionClass("Projectile")
     self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
+
+    self.target = nil
+
+    if self.attack == "Homing" then
+        self.timer:every(0.02, function ()
+            self.area:addGameObject(
+                "TrailParticle",
+                self.x - self.s * math.cos(self.r),
+                self.y - self.s * math.sin(self.r),
+                {parent = self, d = random(0.1, 0.15), r = random(1, 3), color = skill_point_color}
+            )
+        end)
+    end
 end
 
 
 
 function Projectile:update(dt)
     Projectile.super.update(self, dt)
-    self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
+
+    
+
+    if self.attack == "Homing" then
+        --aquire target
+        if not self.target then
+            local targets = self.area:getAllGameObjectsThat(function (e)
+                return e.group == "enemy" and distanceSquared(e.x, e.y, self.x, self.y) < 16000
+            end)
+            self.target = table.remove(targets, love.math.random(1, #targets))
+        end
+
+        if self.target and self.target.dead then self.target = nil end
+
+        --move towards target
+        if self.target then
+            local heading = Vector(self.collider:getLinearVelocity()):normalized()
+            local angle = math.atan2(self.target.y - self.y, self.target.x - self.x)
+            local to_target_heading = Vector(math.cos(angle), math.sin(angle)):normalized()
+            local final_heading = (heading + 0.1 * to_target_heading):normalized()
+            self.collider:setLinearVelocity(self.v * final_heading.x, self.v * final_heading.y)
+            self.r = angle--math.atan2(self.v * final_heading.y, self.v * final_heading.x)
+        else
+            self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
+        end
+    else 
+        self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
+    end
+
+
+    
 
     if self:checkBounds() then
         self:die()
@@ -31,24 +74,29 @@ function Projectile:update(dt)
         local object = col_info.collider:getObject()
         object:hit(self.damage)
         self:die()
-        --if object:is(Rock) then
-            --object:hit(self.damage)
-            --self:die()
-        --end
     end
 end
 
 function Projectile:draw()
-    pushRotate(self.x, self.y, Vector(self.collider:getLinearVelocity()):angleTo())
-    love.graphics.setLineWidth(self.s - self.s * 0.25)
-    
-    love.graphics.setColor(self.color)
-    love.graphics.line(self.x, self.y, self.x + 2 * self.s, self.y)
-    
-    love.graphics.setColor(default_color)
-    love.graphics.line(self.x - 2 * self.s, self.y, self.x, self.y)
+    pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
-    love.graphics.setLineWidth(1)
+    if self.attack == "Homing" then
+        love.graphics.setColor(self.color)
+        love.graphics.polygon("fill", self.x - 2.0 * self.s, self.y, self.x, self.y + 1.5 * self.s, self.x, self.y - 1.5 * self.s)
+
+        love.graphics.setColor(default_color)
+        love.graphics.polygon("fill", self.x + 2.0 *self.s, self.y, self.x, self.y - 1.5 * self.s, self.x, self.y + 1.5 * self.s)
+    else
+        love.graphics.setLineWidth(self.s - self.s * 0.25)
+        
+        love.graphics.setColor(self.color)
+        love.graphics.line(self.x, self.y, self.x + 2 * self.s, self.y)
+        
+        love.graphics.setColor(default_color)
+        love.graphics.line(self.x - 2 * self.s, self.y, self.x, self.y)
+
+        love.graphics.setLineWidth(1)
+    end
     love.graphics.pop()
 end
 

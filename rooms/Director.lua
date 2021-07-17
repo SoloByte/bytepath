@@ -45,12 +45,13 @@ function Director:new(stage)
 
     self.attack_spawn_chances = chanceList(
         --{"Neutral", 0},
-        {"Double", 25},
+        {"Double", 20},
         {"Triple", 15},
-        {"Spread",30},
+        {"Spread",20},
         {"Rapid", 10},
         {"Side", 10},
-        {"Back", 10}
+        {"Back", 10},
+        {"Homing", 15}
     )
 
     self.resource_spawn_chances = chanceList({'Boost', 28}, {'HP', 14}, {'Skillpoint', 58})

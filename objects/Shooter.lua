@@ -4,7 +4,8 @@ Shooter = GameObject:extend()
 function Shooter:new(area, x,y,opts)
     Shooter.super.new(self,area,x,y,opts)
 
-
+    self.group = "enemy"
+    
     local direction = table.random({-1, 1})
     self.x = gw * 0.5 + direction * (gw * 0.5 + 48)
     self.y = random(16, gh - 16)

@@ -85,6 +85,17 @@ function chanceList(...)
 end
 
 
+function distanceSquared(x1, y1, x2, y2)
+    local xdif = x1 - x2
+    local ydif = y1 - y2
+    return xdif * xdif + ydif * ydif
+end
+
+function distance(x1, y1, x2, y2)
+    return math.sqrt(distanceSquared(x1, y1, x2, y2))
+end
+
+
 function overlapRectangles(x, y, w, h, x2, y2, w2, h2)
     local left = x
     local right = x + w
