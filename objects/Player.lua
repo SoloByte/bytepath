@@ -36,11 +36,15 @@ function Player:new(area, x, y, opts)
     self.cycle_timer = 0
     self.cycle_cooldown = 5
 
+
+    self.inside_haste_area = false
+
     --multipliers
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
     self.boost_multiplier = 1
     self.attack_speed_multiplier = 1
+    self.pre_haste_attack_speed_multiplier = 1
 
     --flats
     self.flat_hp = 0
@@ -291,11 +295,15 @@ function Player:update(dt)
         end
     elseif self.collider:enter("Enemy") then
         local col_info = self.collider:getEnterCollisionData("Enemy")
-        local object = col_info.collider:getObject()
-        if object:is(Rock) then
-            self:hit(30)
-        elseif object:is(Shooter) then
-            self:hit(20)
+        if col_info then
+            local object = col_info.collider:getObject()
+            if object then
+                if object:is(Rock) then
+                    self:hit(30)
+                elseif object:is(Shooter) then
+                    self:hit(20)
+                end
+            end
         end
     end
 
@@ -444,15 +452,35 @@ function Player:onSkillpointPickup()
     end
 
     if self.chances.spawn_haste_area_on_sp_pickup_chance:next() then
-        
+        self.area:addGameObject("HasteArea", self.x, self.y)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!'})
     end
 end
 
 function Player:onHPPickup()
     if self.chances.spawn_haste_area_on_hp_pickup_chance:next() then
-        
+        self.area:addGameObject("HasteArea", self.x, self.y)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!'})
     end
 end
+
+
+function Player:enterHasteArea()
+    if self.inside_haste_area then return end
+    self.inside_haste_area = true
+    self.pre_haste_attack_speed_multiplier = self.attack_speed_multiplier
+    self.attack_speed_multiplier = self.attack_speed_multiplier * 0.5
+end
+
+function Player:exitHasteArea()
+    if not self.inside_haste_area then return end
+    self.inside_haste_area = false
+    self.attack_speed_multiplier = self.pre_haste_attack_speed_multiplier
+    self.pre_haste_attack_speed_multiplier = nil
+end
+
+
+
 
 function Player:changeShip(new_ship)
     self.ship = new_ship
