@@ -15,6 +15,8 @@ function Ammo:new(area, x, y, opts)
     self.v = random(10, 20)
     self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
     self.collider:applyAngularImpulse(random(-24, 24))
+
+    self.group = "resource"
 end
 
 

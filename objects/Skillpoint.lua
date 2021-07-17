@@ -18,7 +18,7 @@ function Skillpoint:new(area, x,y,opts)
     self.collider:setLinearVelocity(self.v, 0)
     self.collider:applyAngularImpulse(random(-24, 24))
 
-
+    self.group = "resource"
 end
 
 function Skillpoint:update(dt)

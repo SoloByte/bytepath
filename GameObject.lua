@@ -12,7 +12,7 @@ function GameObject:new(area, x, y, opts)
     self.creation_time = love.timer.getTime()
     self.depth = 50
     self.group = "gameobject"
-    
+    self.slow_factor = 1.0
 end
 
 function GameObject:update(dt)
@@ -36,4 +36,8 @@ function GameObject:destroy()
         self.collider:destroy()
         self.collider = nil
     end
+end
+
+function GameObject:setSlowFactor(factor)
+    
 end

@@ -24,6 +24,8 @@ function Attack:new(area, x,y,opts)
     end
     self.font = fonts.m5x7_16
     self.font_w, self.font_h = self.font:getWidth(attacks[self.attack].abbrevation), self.font:getHeight()
+
+    self.group = "resource"
     
 end
 
