@@ -145,106 +145,45 @@ function Player:shoot()
     d = d * 1.5
     if self.attack == "Neutral" then
         self:spawnProjectile(self.attack, self.r, d)
-        --self.area:addGameObject("Projectile", 
-        --self.x + d * math.cos(self.r), 
-        --self.y + d * math.sin(self.r), 
-        --{r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+
     elseif self.attack == "Sniper" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, v = 300, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, self.r, d, 300)
+
     elseif self.attack == "Homing" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, self.r, d)
+
     elseif self.attack == "Swarm" then
         for i = 1, 6 do
             local angle = self.r + random(-math.pi * 0.2, math.pi * 0.2)
-            self.area:addGameObject(
-                "Projectile", 
-                self.x + d * math.cos(angle), 
-                self.y + d * math.sin(angle), 
-                {
-                    r = angle, 
-                    attack = self.attack, 
-                    v = random(180, 220),
-                    speed_multiplier = self.projectile_speed_mutliplier.value
-                }
-            )
+            self:spawnProjectile(self.attack, angle, d, random(180, 220))
         end
+
     elseif self.attack == "Double" then
-        self.area:addGameObject('Projectile', 
-    	self.x + d*math.cos(self.r + math.pi/12), 
-    	self.y + d*math.sin(self.r + math.pi/12), 
-    	{r = self.r + math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-        
-        self.area:addGameObject('Projectile', 
-    	self.x + d*math.cos(self.r - math.pi/12),
-    	self.y + d*math.sin(self.r - math.pi/12), 
-    	{r = self.r - math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
+        self:spawnProjectile(self.attack, self.r - math.pi/12, d)
     
     elseif self.attack == "Triple" then
-        self.area:addGameObject('Projectile', 
-    	self.x + d*math.cos(self.r + math.pi/12), 
-    	self.y + d*math.sin(self.r + math.pi/12), 
-    	{r = self.r + math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-        
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-
-        self.area:addGameObject('Projectile', 
-    	self.x + d*math.cos(self.r - math.pi/12),
-    	self.y + d*math.sin(self.r - math.pi/12), 
-    	{r = self.r - math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
+        self:spawnProjectile(self.attack, self.r, d)
+        self:spawnProjectile(self.attack, self.r - math.pi/12, d)
 
     elseif self.attack == "Spread" then
         local max_angle = math.pi / 8
         local rand_angle = random(-max_angle, max_angle)
         local accuracy = self.r + rand_angle
-
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(accuracy), 
-        self.y + d * math.sin(accuracy), 
-        {r = accuracy, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, accuracy, d)
 
     elseif self.attack == "Rapid" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, self.r, d)
 
     elseif self.attack == "Back" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r + math.pi), 
-        self.y + d * math.sin(self.r + math.pi), 
-        {r = self.r + math.pi, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile(self.attack, self.r, d)
+        self:spawnProjectile(self.attack, self.r + math.pi, d)
 
     elseif self.attack == "Side" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r + math.pi * 0.5), 
-        self.y + d * math.sin(self.r + math.pi * 0.5), 
-        {r = self.r + math.pi * 0.5, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r - math.pi * 0.5), 
-        self.y + d * math.sin(self.r - math.pi * 0.5), 
-        {r = self.r - math.pi * 0.5, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
-    
+        self:spawnProjectile(self.attack, self.r + math.pi * 0.5, d)
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
+        self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d)
     end
 
     self:addAmmo(-attacks[self.attack].ammo)
@@ -504,16 +443,7 @@ function Player:onKill()
         d = d * 1.5
         self.timer:every("barrage", 0.05, function ()
             local angle = self.r + random(-math.pi/8, math.pi/8)
-            self.area:addGameObject(
-                "Projectile", 
-                self.x + d * math.cos(angle), 
-                self.y + d * math.sin(angle), 
-                {
-                    r = angle, 
-                    attack = self.attack, 
-                    speed_multiplier = self.projectile_speed_mutliplier.value
-                }
-            )
+            self:spawnProjectile(self.attack, angle, d)
         end, 8)
 
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
@@ -528,10 +458,7 @@ function Player:onKill()
     if self.chances.launch_homing_projectile_on_kill_chance:next() then
         local d = self.w * 1.2
         d = d * 1.5 
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile("Homing", self.r, d)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
     end
 
@@ -594,16 +521,7 @@ function Player:onCycle()
         d = d * 1.5
         self.timer:every("barrage", 0.05, function ()
             local angle = self.r + random(-math.pi/8, math.pi/8)
-            self.area:addGameObject(
-                "Projectile", 
-                self.x + d * math.cos(angle), 
-                self.y + d * math.sin(angle), 
-                {
-                    r = angle, 
-                    attack = self.attack, 
-                    speed_multiplier = self.projectile_speed_mutliplier.value
-                }
-            )
+            self:spawnProjectile(self.attack, angle, d)
         end, 8)
 
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
@@ -612,10 +530,7 @@ function Player:onCycle()
     if self.chances.launch_homing_projectile_on_cycle_chance:next() then
         local d = self.w * 1.2
         d = d * 1.5 
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile("Homing", self.r + math.pi * 0.5, d)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
     end
 
@@ -648,10 +563,7 @@ function Player:onAmmoPickup()
     if self.chances.launch_homing_projectile_on_ammo_pickup_chance:next() then
         local d = self.w * 1.2
         d = d * 1.5 
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
+        self:spawnProjectile("Homing", self.r, d)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
     end
 
