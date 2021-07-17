@@ -25,7 +25,9 @@ attacks = {
     ["Rapid"] = {cooldown = 0.12, ammo = 1, abbrevation = "R", color = default_color},
     ["Back"] = {cooldown = 0.32, ammo = 2, abbrevation = "Ba", color = skill_point_color},
     ["Side"] = {cooldown = 0.32, ammo = 2, abbrevation = "Si", color = boost_color},
-    ['Homing'] = {cooldown = 0.56, ammo = 4, abbrevation = 'H', color = skill_point_color},
+    ["Homing"] = {cooldown = 0.56, ammo = 4, abbrevation = 'H', color = skill_point_color},
+    ["Sniper"] = {cooldown = 0.5, ammo = 3, abbrevation = 'Sn', color = boost_color},
+    ["Swarm"] = {cooldown = 2.5, ammo = 15, abbrevation = 'Sw', color = skill_point_color},
 }
 
 

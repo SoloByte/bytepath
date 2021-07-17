@@ -47,11 +47,13 @@ function Director:new(stage)
         --{"Neutral", 0},
         {"Double", 20},
         {"Triple", 15},
-        {"Spread",20},
-        {"Rapid", 10},
+        {"Spread",15},
+        {"Rapid", 5},
         {"Side", 10},
         {"Back", 10},
-        {"Homing", 15}
+        {"Homing", 10},
+        {"Sniper", 15},
+        {"Swarm", 5}
     )
 
     self.resource_spawn_chances = chanceList({'Boost', 28}, {'HP', 14}, {'Skillpoint', 58})

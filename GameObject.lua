@@ -12,6 +12,7 @@ function GameObject:new(area, x, y, opts)
     self.creation_time = love.timer.getTime()
     self.depth = 50
     self.group = "gameobject"
+    
 end
 
 function GameObject:update(dt)

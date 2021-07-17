@@ -17,7 +17,7 @@ function Projectile:new(area, x, y, opts)
 
     self.target = nil
 
-    if self.attack == "Homing" then
+    if self.attack == "Homing" or self.attack == "Swarm" then
         self.timer:every(0.02, function ()
             self.area:addGameObject(
                 "TrailParticle",
@@ -36,7 +36,7 @@ function Projectile:update(dt)
 
     
 
-    if self.attack == "Homing" then
+    if self.attack == "Homing" or self.attack == "Swarm" then
         --aquire target
         if not self.target then
             local targets = self.area:getAllGameObjectsThat(function (e)
@@ -73,14 +73,16 @@ function Projectile:update(dt)
         local col_info = self.collider:getEnterCollisionData("Enemy")
         local object = col_info.collider:getObject()
         object:hit(self.damage)
-        self:die()
+        if self.attack ~= "Sniper" then
+            self:die()
+        end
     end
 end
 
 function Projectile:draw()
     pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
-    if self.attack == "Homing" then
+    if self.attack == "Homing" or self.attack == "Swarm" then
         love.graphics.setColor(self.color)
         love.graphics.polygon("fill", self.x - 2.0 * self.s, self.y, self.x, self.y + 1.5 * self.s, self.x, self.y - 1.5 * self.s)
 

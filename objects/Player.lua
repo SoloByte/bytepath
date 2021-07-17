@@ -121,13 +121,29 @@ function Player:shoot()
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
         {r = self.r, attack = self.attack})
-
+    elseif self.attack == "Sniper" then
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = self.attack, v = 300})
     elseif self.attack == "Homing" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
         {r = self.r, attack = self.attack})
-
+    elseif self.attack == "Swarm" then
+        for i = 1, 6 do
+            self.area:addGameObject(
+                "Projectile", 
+                self.x + d * math.cos(self.r), 
+                self.y + d * math.sin(self.r), 
+                {
+                    r = self.r + random(-math.pi * 0.2, math.pi * 0.2), 
+                    attack = self.attack, 
+                    v = random(180, 220)
+                }
+            )
+        end
     elseif self.attack == "Double" then
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r + math.pi/12), 

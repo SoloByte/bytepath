@@ -34,7 +34,9 @@ function EnemyProjectile:update(dt)
     elseif self.collider:enter("Projectile") then
         local col_info = self.collider:getEnterCollisionData("Projectile")
         local object = col_info.collider:getObject()
-        object:die()
+        if object.attack ~="Sniper" then
+            object:die()
+        end
         self:die()
     end
 end
