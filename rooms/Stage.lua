@@ -80,7 +80,7 @@ function Stage:draw()
         
         --skillpoints
         love.graphics.setColor(skill_point_color)
-        self:drawText(SP, 20, 10, "center", "center")
+        self:drawText(SP .. "SP", 20, 10, "center", "center")
 
         self:drawHP()
         self:drawBoost()

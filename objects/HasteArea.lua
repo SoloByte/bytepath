@@ -21,13 +21,13 @@ function HasteArea:update(dt)
     local dis_sq = distanceSquared(player.x, player.y, self.x, self.y)
     local r_sq = self.r * self.r
     if dis_sq < r_sq then
-        --if not player.inside_haste_area then
-        player:enterHasteArea()
-        --end
+        if not player.inside_haste_area then
+            player.inside_haste_area = true
+        end
     else
-        --if player.inside_haste_area then
-        player:exitHasteArea()
-        --end
+        if player.inside_haste_area then
+            player.inside_haste_area = false
+        end
     end
 end
 

@@ -43,8 +43,16 @@ function Player:new(area, x, y, opts)
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
     self.boost_multiplier = 1
-    self.attack_speed_multiplier = 1
-    self.pre_haste_attack_speed_multiplier = 1
+
+    self.attack_speed_multiplier = Stat(1)
+    self.attack_speed_boosting = false
+
+    self.movement_speed_multiplier = Stat(1)
+    self.movement_speed_boosting = false
+
+    self.projectile_speed_mutliplier = Stat(1)
+    self.projectile_speed_boosting = false
+    self.projectile_speed_inhibiting = false
 
     --flats
     self.flat_hp = 0
@@ -57,7 +65,26 @@ function Player:new(area, x, y, opts)
     self.regain_hp_on_sp_pickup_chance = 0
     self.spawn_haste_area_on_hp_pickup_chance = 0
     self.spawn_haste_area_on_sp_pickup_chance = 0
+    self.spawn_sp_on_cycle_chance = 0
+    self.barrage_on_kill_chance = 0
 
+    self.spawn_hp_on_cycle_chance = 0
+    self.regain_hp_on_cycle_chance = 0 --25
+    self.regain_full_ammo_on_cycle_chance = 0
+    self.change_attack_on_cycle_chance = 0
+    self.spawn_haste_area_on_cycle_chance = 0
+    self.barrage_on_cycle_chance = 0
+    self.launch_homing_projectile_on_cycle_chance = 0
+    self.regain_ammo_on_kill_chance = 0 --20
+    self.launch_homing_projectile_on_kill_chance = 0
+    self.regain_boost_on_kill_chance = 0 --40
+    self.spawn_boost_on_kill_chance = 0
+    self.gain_attack_speed_boost_on_kill_chance = 0
+    self.gain_movement_speed_boost_on_cycle_chance = 0
+    self.gain_projectile_speed_boost_on_cycle_chance = 0
+    self.gain_projectile_speed_inhibit_on_cycle_chance = 50
+    
+    
     self.ammo_gain = 0
 
     self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
@@ -117,30 +144,33 @@ function Player:shoot()
 
     d = d * 1.5
     if self.attack == "Neutral" then
-        self.area:addGameObject("Projectile", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        self:spawnProjectile(self.attack, self.r, d)
+        --self.area:addGameObject("Projectile", 
+        --self.x + d * math.cos(self.r), 
+        --self.y + d * math.sin(self.r), 
+        --{r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
     elseif self.attack == "Sniper" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack, v = 300})
+        {r = self.r, attack = self.attack, v = 300, speed_multiplier = self.projectile_speed_mutliplier.value})
     elseif self.attack == "Homing" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
     elseif self.attack == "Swarm" then
         for i = 1, 6 do
+            local angle = self.r + random(-math.pi * 0.2, math.pi * 0.2)
             self.area:addGameObject(
                 "Projectile", 
-                self.x + d * math.cos(self.r), 
-                self.y + d * math.sin(self.r), 
+                self.x + d * math.cos(angle), 
+                self.y + d * math.sin(angle), 
                 {
-                    r = self.r + random(-math.pi * 0.2, math.pi * 0.2), 
+                    r = angle, 
                     attack = self.attack, 
-                    v = random(180, 220)
+                    v = random(180, 220),
+                    speed_multiplier = self.projectile_speed_mutliplier.value
                 }
             )
         end
@@ -148,28 +178,28 @@ function Player:shoot()
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r + math.pi/12), 
     	self.y + d*math.sin(self.r + math.pi/12), 
-    	{r = self.r + math.pi/12, attack = self.attack})
+    	{r = self.r + math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
         
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r - math.pi/12),
     	self.y + d*math.sin(self.r - math.pi/12), 
-    	{r = self.r - math.pi/12, attack = self.attack})
+    	{r = self.r - math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
     
     elseif self.attack == "Triple" then
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r + math.pi/12), 
     	self.y + d*math.sin(self.r + math.pi/12), 
-    	{r = self.r + math.pi/12, attack = self.attack})
+    	{r = self.r + math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
         
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
         self.area:addGameObject('Projectile', 
     	self.x + d*math.cos(self.r - math.pi/12),
     	self.y + d*math.sin(self.r - math.pi/12), 
-    	{r = self.r - math.pi/12, attack = self.attack})
+    	{r = self.r - math.pi/12, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
 
     elseif self.attack == "Spread" then
@@ -180,40 +210,40 @@ function Player:shoot()
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(accuracy), 
         self.y + d * math.sin(accuracy), 
-        {r = accuracy, attack = self.attack})
+        {r = accuracy, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
     elseif self.attack == "Rapid" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
     elseif self.attack == "Back" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r + math.pi), 
         self.y + d * math.sin(self.r + math.pi), 
-        {r = self.r + math.pi, attack = self.attack})
+        {r = self.r + math.pi, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
     elseif self.attack == "Side" then
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = self.attack})
+        {r = self.r, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r + math.pi * 0.5), 
         self.y + d * math.sin(self.r + math.pi * 0.5), 
-        {r = self.r + math.pi * 0.5, attack = self.attack})
+        {r = self.r + math.pi * 0.5, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
 
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r - math.pi * 0.5), 
         self.y + d * math.sin(self.r - math.pi * 0.5), 
-        {r = self.r - math.pi * 0.5, attack = self.attack})
+        {r = self.r - math.pi * 0.5, attack = self.attack, speed_multiplier = self.projectile_speed_mutliplier.value})
     
     end
 
@@ -224,6 +254,7 @@ end
 
 function Player:cycle()
     self.area:addGameObject("TickEffect", self.x, self.y, {parent = self})
+    self:onCycle()
 end
 
 function Player:addAmmo(amount)
@@ -259,8 +290,8 @@ function Player:hit(damage, pos_x, pos_y)
 
         if dmg >= 30 then
             self.invincible = true
-            self.timer:after(2, function () self.invincible = false end)
-            self.timer:every(0.04, function ()
+            self.timer:after("invincible", 2, function () self.invincible = false end)
+            self.timer:every("invincible", 0.04, function ()
                 self.invisible = not self.invisible
                 if not self.invincible then self.invisible = false end
                 return self.invincible 
@@ -329,8 +360,15 @@ function Player:update(dt)
         self:cycle()
     end
 
+    if self.projectile_speed_boosting then self.projectile_speed_mutliplier:increase(100) end
+    if self.projectile_speed_inhibiting then self.projectile_speed_mutliplier:decrease(50) end
+    self.projectile_speed_mutliplier:update(dt)
+
+    if self.inside_haste_area then self.attack_speed_multiplier:increase(100) end
+    if self.attack_speed_boosting then self.attack_speed_multiplier:increase(100) end
+    self.attack_speed_multiplier:update(dt)
     self.shoot_timer = self.shoot_timer + dt
-    if self.shoot_timer > self.shoot_cooldown * self.attack_speed_multiplier then
+    if self.shoot_timer > self.shoot_cooldown/self.attack_speed_multiplier.value then
         self.shoot_timer = 0
         self:shoot()
     end
@@ -372,7 +410,9 @@ function Player:update(dt)
     if input:down("left") then self.r = self.r - self.rv * dt end
     if input:down("right") then self.r = self.r + self.rv * dt end
 
-    self.vel = math.min(self.vel + self.acc * dt, self.max_vel)
+    if self.movement_speed_boosting then self.movement_speed_multiplier:increase(50) end
+    self.movement_speed_multiplier:update(dt)
+    self.vel = math.min(self.vel + self.acc * dt, self.max_vel * self.movement_speed_multiplier.value)
     self.collider:setLinearVelocity(self.vel * math.cos(self.r), self.vel * math.sin(self.r))
 
     if self:checkBounds() then
@@ -411,6 +451,14 @@ function Player:destroy()
 end
 
 function Player:die()
+    self.timer:cancel("barrage")
+    self.timer:cancel("aspd_boost")
+    self.timer:cancel("playertrail")
+    self.timer:cancel("invincible")
+    self.timer:cancel("mspd_boost")
+    self.timer:cancel("pspd_boost")
+    self.timer:cancel("pspd_inhibit")
+
     self.dead = true
 
     self:spawnParticles()
@@ -444,6 +492,158 @@ end
 
 
 
+function Player:onKill()
+    if self.chances.barrage_on_kill_chance:next() then
+        local d = self.w * 1.2
+
+        self.area:addGameObject("ShootEffect", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {player = self, d = d})
+
+        d = d * 1.5
+        self.timer:every("barrage", 0.05, function ()
+            local angle = self.r + random(-math.pi/8, math.pi/8)
+            self.area:addGameObject(
+                "Projectile", 
+                self.x + d * math.cos(angle), 
+                self.y + d * math.sin(angle), 
+                {
+                    r = angle, 
+                    attack = self.attack, 
+                    speed_multiplier = self.projectile_speed_mutliplier.value
+                }
+            )
+        end, 8)
+
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
+    end
+
+    if self.chances.regain_ammo_on_kill_chance:next() then
+        self:addAmmo(20)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Ammo Regain!', color = ammo_color})
+    end
+
+    
+    if self.chances.launch_homing_projectile_on_kill_chance:next() then
+        local d = self.w * 1.2
+        d = d * 1.5 
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+    end
+
+    if self.chances.regain_boost_on_kill_chance:next() then
+        self:addBoost(40)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Boost Regain!', color = boost_color})
+    end
+
+    if self.chances.spawn_boost_on_kill_chance:next() then
+        self.area:addGameObject("Boost")
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Boost Spawn!', color = boost_color})
+    end
+
+    if self.chances.gain_attack_speed_boost_on_kill_chance:next() then
+        self.attack_speed_boosting = true
+        self.timer:after("aspd_boost", 4.0, function () self.attack_speed_boosting = false end)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'ASPD Boost!', color = ammo_color})
+    end
+end
+
+function Player:onCycle()
+    if self.chances.spawn_sp_on_cycle_chance:next() then
+        self.area:addGameObject("Skillpoint")
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'SP SPawn!', color = skill_point_color})
+    end
+
+    if self.chances.spawn_hp_on_cycle_chance:next() then
+        self.area:addGameObject("HP")
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Spawn!', color = hp_color})
+    end
+
+    if self.chances.regain_hp_on_cycle_chance:next() then
+        self:addHP(25)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Regain HP!', color = hp_color})
+    end
+
+    if self.chances.regain_full_ammo_on_cycle_chance:next() then
+        self:addAmmo(self.max_ammo)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Full Ammo!', color = ammo_color})
+    end
+
+    if self.chances.change_attack_on_cycle_chance:next() then
+        self:setAttack(table.random(table.keys(attacks)))
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Random Attack!', color = skill_point_color})
+    end
+
+    if self.chances.spawn_haste_area_on_cycle_chance:next() then
+        self.area:addGameObject("HasteArea", self.x, self.y)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
+    end
+
+    if self.chances.barrage_on_cycle_chance:next() then
+        local d = self.w * 1.2
+
+        self.area:addGameObject("ShootEffect", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {player = self, d = d})
+
+        d = d * 1.5
+        self.timer:every("barrage", 0.05, function ()
+            local angle = self.r + random(-math.pi/8, math.pi/8)
+            self.area:addGameObject(
+                "Projectile", 
+                self.x + d * math.cos(angle), 
+                self.y + d * math.sin(angle), 
+                {
+                    r = angle, 
+                    attack = self.attack, 
+                    speed_multiplier = self.projectile_speed_mutliplier.value
+                }
+            )
+        end, 8)
+
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
+    end
+
+    if self.chances.launch_homing_projectile_on_cycle_chance:next() then
+        local d = self.w * 1.2
+        d = d * 1.5 
+        self.area:addGameObject("Projectile", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+    end
+
+    if self.chances.gain_movement_speed_boost_on_cycle_chance:next() then
+        self.movement_speed_boosting = true
+        self.timer:after("mspd_boost", 4.0, function ()
+            self.movement_speed_boosting = false
+        end)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'MSPD Boost!', color = boost_color})
+    end
+
+    if self.chances.gain_projectile_speed_boost_on_cycle_chance:next() then
+        self.projectile_speed_boosting = true
+        self.timer:after("pspd_boost", 4.0, function ()
+            self.projectile_speed_boosting = false
+        end)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'PSPD Boost!', color = skill_point_color})
+    end
+
+    if self.chances.gain_projectile_speed_inhibit_on_cycle_chance:next() then
+        self.projectile_speed_inhibiting = true
+        self.timer:after("pspd_inhibit", 4.0, function ()
+            self.projectile_speed_inhibiting = false
+        end)
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'PSPD Slow!', color = skill_point_color})
+    end
+end
+
 function Player:onAmmoPickup()
     if self.chances.launch_homing_projectile_on_ammo_pickup_chance:next() then
         local d = self.w * 1.2
@@ -451,52 +651,42 @@ function Player:onAmmoPickup()
         self.area:addGameObject("Projectile", 
         self.x + d * math.cos(self.r), 
         self.y + d * math.sin(self.r), 
-        {r = self.r, attack = "Homing"})
+        {r = self.r, attack = "Homing", speed_multiplier = self.projectile_speed_mutliplier.value})
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
     end
 
     if self.chances.regain_hp_on_ammo_pickup_chance:next() then
         self:addHP(25)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!'})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!', color = hp_color})
     end
 end
 
 function Player:onSkillpointPickup()
     if self.chances.regain_hp_on_sp_pickup_chance:next() then
         self:addHP(25)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!'})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Regain!', color = hp_color})
     end
 
     if self.chances.spawn_haste_area_on_sp_pickup_chance:next() then
         self.area:addGameObject("HasteArea", self.x, self.y)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!'})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
     end
 end
 
 function Player:onHPPickup()
     if self.chances.spawn_haste_area_on_hp_pickup_chance:next() then
         self.area:addGameObject("HasteArea", self.x, self.y)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!'})
+        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
     end
 end
 
 
-function Player:enterHasteArea()
-    if self.inside_haste_area then return end
-    self.inside_haste_area = true
-    self.pre_haste_attack_speed_multiplier = self.attack_speed_multiplier
-    self.attack_speed_multiplier = self.attack_speed_multiplier * 0.5
+function Player:spawnProjectile(atk, rot, dis, vel)
+    self.area:addGameObject("Projectile", 
+    self.x + dis * math.cos(rot), 
+    self.y + dis * math.sin(rot), 
+    {r = rot or 0, attack = atk, v = vel or 200, speed_multiplier = self.projectile_speed_mutliplier.value})
 end
-
-function Player:exitHasteArea()
-    if not self.inside_haste_area then return end
-    self.inside_haste_area = false
-    self.attack_speed_multiplier = self.pre_haste_attack_speed_multiplier
-    self.pre_haste_attack_speed_multiplier = nil
-end
-
-
-
 
 function Player:changeShip(new_ship)
     self.ship = new_ship

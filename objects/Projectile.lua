@@ -8,6 +8,7 @@ function Projectile:new(area, x, y, opts)
     self.depth = 60
     self.s = opts.s or 2.5
     self.v = opts.v or 200
+    self.v = self.v * (opts.speed_multiplier or 1)
     self.damage = opts.damage or 100
     self.color = attacks[self.attack].color
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.s)
@@ -73,6 +74,7 @@ function Projectile:update(dt)
         local col_info = self.collider:getEnterCollisionData("Enemy")
         local object = col_info.collider:getObject()
         object:hit(self.damage)
+        if object.dead then current_room.player:onKill() end
         if self.attack ~= "Sniper" then
             self:die()
         end
