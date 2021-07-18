@@ -10,7 +10,6 @@ function Stage:new()
     self.area.world:addCollisionClass("EnemyProjectile", {ignores = {"EnemyProjectile", "Enemy"}})
     self.area.world:addCollisionClass("Collectable", {ignores = {"Projectile", "EnemyProjectile", "Collectable", "Enemy"}})
     self.main_canvas = love.graphics.newCanvas(gw, gh)
-    self.director = Director(self)
 
     self.score = 0
     self.font = fonts.m5x7_16
@@ -45,6 +44,7 @@ function Stage:new()
 
     self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
     
+    self.director = Director(self)
     --[[
     input:bind("f4", function ()
         self.player.dead = true

@@ -7,6 +7,7 @@ function Projectile:new(area, x, y, opts)
     Projectile.super.new(self, area, x, y, opts)
     self.depth = 60
     self.s = opts.s or 2.5
+    self.s = self.s * (opts.size_multiplier or 1)
     self.v = opts.v or 200
     self.v = self.v * (opts.speed_multiplier or 1)
     self.damage = opts.damage or 100

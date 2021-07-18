@@ -43,6 +43,7 @@ function Player:new(area, x, y, opts)
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
     self.boost_multiplier = 1
+    self.enemy_spawn_rate_multiplier = 1
 
     self.attack_speed_multiplier = Stat(1)
     self.attack_speed_boosting = false
@@ -54,10 +55,31 @@ function Player:new(area, x, y, opts)
     self.projectile_speed_boosting = false
     self.projectile_speed_inhibiting = false
 
+    self.cycle_speed_multiplayer = Stat(1)
+    self.increased_cycle_speed_while_boosting = false
+
+    self.luck_multiplier = 1
+    self.hp_spawn_chance_multiplier = 1.0
+    self.sp_spawn_chance_multiplier = 1.0
+    self.boost_spawn_chance_multiplier = 1.0
+    self.resource_spawn_rate_multiplier = 1.0
+    self.attack_spawn_rate_multiplier = 1.0
+
+    self.turn_rate_multiplier = 1.0
+    self.boost_effectiveness_multiplier = 1.0
+    self.projectile_size_mutliplier = 1.0
+    self.boost_recharge_rate_mutliplier = 1.0
+    self.invulnerability_time_multiplier = 1.0
+    self.ammo_consumption_multiplier = 1.0
+    self.size_multiplier = 1.0
+    self.stat_boost_duration_multiplier = 1.0
+
+
     --flats
     self.flat_hp = 0
     self.flat_ammo = 0
     self.flat_boost = 0
+    
 
     --chances
     self.launch_homing_projectile_on_ammo_pickup_chance = 0
@@ -82,9 +104,18 @@ function Player:new(area, x, y, opts)
     self.gain_attack_speed_boost_on_kill_chance = 0
     self.gain_movement_speed_boost_on_cycle_chance = 0
     self.gain_projectile_speed_boost_on_cycle_chance = 0
-    self.gain_projectile_speed_inhibit_on_cycle_chance = 50
-    
-    
+    self.gain_projectile_speed_inhibit_on_cycle_chance = 0
+    self.launch_homing_projectile_while_boosting_chance = 0
+    self.attack_twice_chance = 0
+    self.gain_double_sp_chance = 0
+
+    self.spawn_double_hp_chance = 0
+    self.spawn_double_sp_chance = 0
+    self.drop_double_ammo_chance = 0
+
+    self.increased_luck_while_boosting = false
+    self.luck_boosting = false
+    self.invulnerability_while_boosting = false
     self.ammo_gain = 0
 
     self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
@@ -129,7 +160,9 @@ function Player:generateChances()
     self.chances = {}
     for key, value in pairs(self) do
         if key:find("_chance") and type(value) == "number" then
-            self.chances[key] = chanceList({true, math.ceil(value)}, {false, 100 - math.ceil(value)})
+            self.chances[key] = chanceList(
+                {true, math.ceil(value * self.luck_multiplier)}, 
+                {false, 100 - math.ceil(value * self.luck_multiplier)})
         end
     end
 end
@@ -186,7 +219,7 @@ function Player:shoot()
         self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d)
     end
 
-    self:addAmmo(-attacks[self.attack].ammo)
+    self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
 end
 
         
@@ -229,7 +262,10 @@ function Player:hit(damage, pos_x, pos_y)
 
         if dmg >= 30 then
             self.invincible = true
-            self.timer:after("invincible", 2, function () self.invincible = false end)
+            self.timer:after(
+                "invincible", 
+                2 * self.invulnerability_time_multiplier, 
+                function () self.invincible = false end)
             self.timer:every("invincible", 0.04, function ()
                 self.invisible = not self.invisible
                 if not self.invincible then self.invisible = false end
@@ -272,6 +308,10 @@ function Player:update(dt)
         elseif object:is(Skillpoint) then
             object:die()
             SP = SP + 1
+            if self.chances.gain_double_sp_chance:next() then
+                SP = SP + 1
+                self.area:addGameObject('InfoText', self.x, self.y, {text = 'Double SP!', color = skill_point_color})
+            end
             self:onSkillpointPickup()
             current_room:increaseScore(SCORE_POINTS.SKILLPOINT)
         elseif object:is(Attack) then
@@ -293,8 +333,9 @@ function Player:update(dt)
         end
     end
 
+    if self.increased_cycle_speed_while_boosting then self.cycle_speed_multiplayer:increase(100) end
     self.cycle_timer = self.cycle_timer + dt
-    if self.cycle_timer >= self.cycle_cooldown then
+    if self.cycle_timer >= self.cycle_cooldown/self.cycle_speed_multiplayer.value then
         self.cycle_timer = 0
         self:cycle()
     end
@@ -310,9 +351,13 @@ function Player:update(dt)
     if self.shoot_timer > self.shoot_cooldown/self.attack_speed_multiplier.value then
         self.shoot_timer = 0
         self:shoot()
+        if self.chances.attack_twice_chance:next() then
+            self:shoot()
+            self.area:addGameObject('InfoText', self.x, self.y, {text = 'Double Attack!', color = ammo_color})
+        end
     end
 
-    self.boost = math.min(self.boost + 10 * dt, self.max_boost)
+    self.boost = math.min(self.boost + 10 * dt * self.boost_recharge_rate_mutliplier, self.max_boost)
     if not self.can_boost then
         self.boost_timer = self.boost_timer + dt
         if self.boost_timer > self.boost_cooldown then
@@ -324,13 +369,21 @@ function Player:update(dt)
 
     self.boosting = false
     self.max_vel = self.base_max_vel
+
+
+    if input:pressed("up") and self.boost > 1 and self.can_boost then self:onBoostStart() end
+    if input:released("up") then self:onBoostEnd() end
+
+    if input:pressed("down") and self.boost > 1 and self.can_boost then self:onBoostStart() end
+    if input:released("down") then self:onBoostEnd() end
+    
     if input:down("up") and self.boost > 1 and self.can_boost then 
         self.boosting = true
-        self.max_vel = self.base_max_vel * 1.5 
+        self.max_vel = self.base_max_vel * 1.5 * self.boost_effectiveness_multiplier
     end
     if input:down("down") and self.boost > 1 and self.can_boost then 
         self.boosting = true
-        self.max_vel = self.base_max_vel * 0.5 
+        self.max_vel = self.base_max_vel * 0.5 / self.boost_effectiveness_multiplier
     end
 
     if self.boosting then
@@ -339,6 +392,7 @@ function Player:update(dt)
             self.can_boost = false
             self.boost_timer = 0
             self.boosting = false
+            self:onBoostEnd()
         end
     end
 
@@ -346,8 +400,8 @@ function Player:update(dt)
     if self.boosting then self.trail_color = boost_color end
 
 
-    if input:down("left") then self.r = self.r - self.rv * dt end
-    if input:down("right") then self.r = self.r + self.rv * dt end
+    if input:down("left") then self.r = self.r - self.rv * dt * self.turn_rate_multiplier end
+    if input:down("right") then self.r = self.r + self.rv * dt * self.turn_rate_multiplier end
 
     if self.movement_speed_boosting then self.movement_speed_multiplier:increase(50) end
     self.movement_speed_multiplier:update(dt)
@@ -384,6 +438,36 @@ end
 
 
 
+function Player:onBoostStart()
+    self.timer:every("boost_chances", 0.2, function ()
+        if self.chances.launch_homing_projectile_while_boosting_chance:next() then
+            local d = self.w * 1.2
+            d = d * 1.5 
+            self:spawnProjectile("Homing", self.r, d)
+            self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+        end
+    end)
+
+    if self.invulnerability_while_boosting then self.invincible = true end
+
+    if self.increased_luck_while_boosting then
+        self.luck_boosting = true
+        self.luck_multiplier = self.luck_multiplier * 2.0
+        self:generateChances()
+    end
+end
+
+function Player:onBoostEnd()
+    self.timer:cancel("boost_chances")
+    if self.invulnerability_while_boosting then self.invincible = false end
+
+    if self.increased_luck_while_boosting and self.luck_boosting then
+        self.luck_boosting = false
+        self.luck_multiplier = self.luck_multiplier * 0.5
+        self:generateChances()
+    end
+end
+
 
 function Player:destroy()
     Player.super.destroy(self)
@@ -397,6 +481,7 @@ function Player:die()
     self.timer:cancel("mspd_boost")
     self.timer:cancel("pspd_boost")
     self.timer:cancel("pspd_inhibit")
+    self.timer:cancel("boost_chances")
 
     self.dead = true
 
@@ -474,7 +559,7 @@ function Player:onKill()
 
     if self.chances.gain_attack_speed_boost_on_kill_chance:next() then
         self.attack_speed_boosting = true
-        self.timer:after("aspd_boost", 4.0, function () self.attack_speed_boosting = false end)
+        self.timer:after("aspd_boost", 4.0 * self.stat_boost_duration_multiplier, function () self.attack_speed_boosting = false end)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'ASPD Boost!', color = ammo_color})
     end
 end
@@ -506,8 +591,7 @@ function Player:onCycle()
     end
 
     if self.chances.spawn_haste_area_on_cycle_chance:next() then
-        self.area:addGameObject("HasteArea", self.x, self.y)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
+        self:spawnHasteArea()
     end
 
     if self.chances.barrage_on_cycle_chance:next() then
@@ -536,7 +620,7 @@ function Player:onCycle()
 
     if self.chances.gain_movement_speed_boost_on_cycle_chance:next() then
         self.movement_speed_boosting = true
-        self.timer:after("mspd_boost", 4.0, function ()
+        self.timer:after("mspd_boost", 4.0 * self.stat_boost_duration_multiplier, function ()
             self.movement_speed_boosting = false
         end)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'MSPD Boost!', color = boost_color})
@@ -544,7 +628,7 @@ function Player:onCycle()
 
     if self.chances.gain_projectile_speed_boost_on_cycle_chance:next() then
         self.projectile_speed_boosting = true
-        self.timer:after("pspd_boost", 4.0, function ()
+        self.timer:after("pspd_boost", 4.0 * self.stat_boost_duration_multiplier, function ()
             self.projectile_speed_boosting = false
         end)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'PSPD Boost!', color = skill_point_color})
@@ -552,7 +636,7 @@ function Player:onCycle()
 
     if self.chances.gain_projectile_speed_inhibit_on_cycle_chance:next() then
         self.projectile_speed_inhibiting = true
-        self.timer:after("pspd_inhibit", 4.0, function ()
+        self.timer:after("pspd_inhibit", 4.0 * self.stat_boost_duration_multiplier, function ()
             self.projectile_speed_inhibiting = false
         end)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'PSPD Slow!', color = skill_point_color})
@@ -580,24 +664,33 @@ function Player:onSkillpointPickup()
     end
 
     if self.chances.spawn_haste_area_on_sp_pickup_chance:next() then
-        self.area:addGameObject("HasteArea", self.x, self.y)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
+        self:spawnHasteArea()
     end
 end
 
 function Player:onHPPickup()
     if self.chances.spawn_haste_area_on_hp_pickup_chance:next() then
-        self.area:addGameObject("HasteArea", self.x, self.y)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
+        self:spawnHasteArea()
     end
 end
 
+
+function Player:spawnHasteArea()
+    self.area:addGameObject("HasteArea", self.x, self.y, {dur_mp = self.stat_boost_duration_multiplier})
+    self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
+end
 
 function Player:spawnProjectile(atk, rot, dis, vel)
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
-    {r = rot or 0, attack = atk, v = vel or 200, speed_multiplier = self.projectile_speed_mutliplier.value})
+    {
+        r = rot or 0, 
+        attack = atk, 
+        v = vel or 200, 
+        speed_multiplier = self.projectile_speed_mutliplier.value,
+        size_multiplier = self.projectile_size_mutliplier
+    })
 end
 
 function Player:changeShip(new_ship)

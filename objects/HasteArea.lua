@@ -3,9 +3,9 @@ HasteArea = GameObject:extend()
 
 function HasteArea:new(area, x,y,opts)
     HasteArea.super.new(self,area,x,y,opts)
-
+    local dur_multiplier = opts.dur_mp or 1.0
     self.r = random(64, 92)
-    self.timer:after(4.0, function ()
+    self.timer:after(4.0 * dur_multiplier, function ()
         self.timer:tween(0.25, self, {r = 0}, "in-out-cubic", function ()
             self:die()
         end)
