@@ -57,9 +57,9 @@ function Director:new(stage)
     )
 
     self.resource_spawn_chances = chanceList(
-        {'Boost', 28 * current_room.player.boost_spawn_chance_multiplier}, 
-        {'HP', 14 * current_room.player.hp_spawn_chance_multiplier}, 
-        {'Skillpoint', 58 * current_room.player.sp_spawn_chance_multiplier})
+        {'Boost', 28 * self.stage.player.boost_spawn_chance_multiplier}, 
+        {'HP', 14 * self.stage.player.hp_spawn_chance_multiplier}, 
+        {'Skillpoint', 58 * self.stage.player.sp_spawn_chance_multiplier})
 
     self:setEnemySpawnsForThisRound()
     

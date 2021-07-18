@@ -7,9 +7,9 @@ function Projectile:new(area, x, y, opts)
     Projectile.super.new(self, area, x, y, opts)
     self.depth = 60
     self.s = opts.s or 2.5
-    self.s = self.s * (opts.size_multiplier or 1)
+    self.s = self.s * (opts.multipliers.size or 1)
     self.v = opts.v or 200
-    self.v = self.v * (opts.speed_multiplier or 1)
+    self.v = self.v * (opts.multipliers.speed or 1)
     self.damage = opts.damage or 100
     self.color = attacks[self.attack].color
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.s)
@@ -27,6 +27,35 @@ function Projectile:new(area, x, y, opts)
                 self.y - self.s * math.sin(self.r),
                 {parent = self, d = random(0.1, 0.15), r = random(1, 3), color = skill_point_color}
             )
+        end)
+    end
+
+    if self.passives.degree_change_90 then
+        self.timer:after(0.2 / self.multipliers.angle_change_frequency, function ()
+            self.ninety_degree_direction = table.random({-1, 1})
+            self.r = self.r + self.ninety_degree_direction * math.pi * 0.5
+            self.timer:every("ninety_degree_first", 0.25 / self.multipliers.angle_change_frequency, function ()
+                self.r = self.r - self.ninety_degree_direction * math.pi * 0.5
+                self.timer:after("ninety_degree_second", 0.1 / self.multipliers.angle_change_frequency, function ()
+                    self.r = self.r - self.ninety_degree_direction * math.pi * 0.5
+                    self.ninety_degree_direction = -1 * self.ninety_degree_direction
+                end)
+            end)
+        end)
+    elseif self.passives.random_degree_change then
+        self.timer:every(0.25 / self.multipliers.angle_change_frequency, function ()
+            self.r = self.r + random(-math.pi * 0.5, math.pi * 0.5)
+        end)
+    elseif self.passives.wavy then
+        local direction = table.random({-1, 1})
+        self.timer:tween(0.25, self, {r = self.r + direction * (math.pi / 8) * self.multipliers.wavy_amplitude}, "linear", function ()
+            self.timer:tween(0.25, self, {r = self.r - direction * (math.pi / 4) * self.multipliers.wavy_amplitude}, "linear")
+        end)
+        self.timer:every(0.75, function ()
+            local angle = math.pi * 0.25 * self.multipliers.wavy_amplitude * direction
+            self.timer:tween(0.25, self, {r = self.r + angle}, "linear", function ()
+                self.timer:tween(0.5, self, {r = self.r - angle}, "linear")
+            end)
         end)
     end
 end

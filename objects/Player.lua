@@ -73,7 +73,8 @@ function Player:new(area, x, y, opts)
     self.ammo_consumption_multiplier = 1.0
     self.size_multiplier = 1.0
     self.stat_boost_duration_multiplier = 1.0
-
+    self.angle_change_frequency_multiplier = 1.0
+    self.projectile_waviness_multiplier = 1.0
 
     --flats
     self.flat_hp = 0
@@ -116,6 +117,15 @@ function Player:new(area, x, y, opts)
     self.increased_luck_while_boosting = false
     self.luck_boosting = false
     self.invulnerability_while_boosting = false
+
+    --projectile passives
+    self.projectile_90_degree_change = false
+    self.projectile_random_degree_change = false
+    self.projectile_wavy = false
+
+
+
+
     self.ammo_gain = 0
 
     self.ship_variants = {"Fighter", "Assault", "Hour", "Sonic", "Sentinel", "Bithunter"}
@@ -688,8 +698,18 @@ function Player:spawnProjectile(atk, rot, dis, vel)
         r = rot or 0, 
         attack = atk, 
         v = vel or 200, 
-        speed_multiplier = self.projectile_speed_mutliplier.value,
-        size_multiplier = self.projectile_size_mutliplier
+        multipliers = {
+            speed = self.projectile_speed_mutliplier.value,
+            size = self.projectile_size_mutliplier,
+            angle_change_frequency = self.angle_change_frequency_multiplier,
+            wavy_amplitude = self.projectile_waviness_multiplier
+        },
+
+        passives = {
+            degree_change_90 = self.projectile_90_degree_change,
+            random_degree_change = self.projectile_random_degree_change,
+            wavy = self.projectile_wavy
+        }
     })
 end
 
