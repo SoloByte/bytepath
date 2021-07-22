@@ -36,23 +36,40 @@ function Projectile:new(area, x, y, opts)
             self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
         end
 
+    elseif self.attack == "Flame" then
+        self.damage = 50
+        --self.color = table.random(negative_colors)
+        if not self.passives.shield then
+            self.timer:tween(random(0.6, 1) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
+        end
+        self.timer:every(0.05, function ()
+            self.area:addGameObject(
+                "ProjectileTrail", 
+                self.x, self.y, 
+                {
+                    color = self.color, 
+                    s = self.s, 
+                    r = Vector(self.collider:getLinearVelocity()):angleTo()
+                }
+            )
+        end)
+    
     elseif self.attack == "Spin" then
         self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
         if not self.passives.shield then
             self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:die() end)
-
-            self.timer:every(0.05, function ()
-                self.area:addGameObject(
-                    "ProjectileTrail", 
-                    self.x, self.y, 
-                    {
-                        color = self.color, 
-                        s = self.s, 
-                        r = Vector(self.collider:getLinearVelocity()):angleTo()
-                    }
-                )
-            end)
         end
+        self.timer:every(0.05, function ()
+            self.area:addGameObject(
+                "ProjectileTrail", 
+                self.x, self.y, 
+                {
+                    color = self.color, 
+                    s = self.s, 
+                    r = Vector(self.collider:getLinearVelocity()):angleTo()
+                }
+            )
+        end)
     end
 
     if self.passives.degree_change_90 then

@@ -30,6 +30,7 @@ attacks = {
     ["Swarm"] = {cooldown = 2.5, ammo = 15, abbrevation = 'Sw', color = skill_point_color},
     ['Blast'] = {cooldown = 0.64, ammo = 6, abbreviation = 'W', color = default_color},
     ['Spin'] = {cooldown = 0.32, ammo = 2, abbreviation = 'Sp', color = hp_color},
+    ['Flame'] = {cooldown = 0.048, ammo = 0.4, abbreviation = 'F', color = skill_point_color},
 }
 
 

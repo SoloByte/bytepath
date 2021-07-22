@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Spin")
+    self:setAttack("Flame")
 
 
     --treeToPlayer(self)
@@ -227,6 +227,12 @@ function Player:shoot()
         local accuracy = self.r + rand_angle
         self:spawnProjectile(self.attack, accuracy, d, mods)
 
+    elseif self.attack == "Flame" then
+        local max_angle = math.pi / 12
+        local rand_angle = random(-max_angle, max_angle)
+        local accuracy = self.r + rand_angle
+        self:spawnProjectile(self.attack, accuracy, d, mods)
+    
     elseif self.attack == "Rapid" then
         self:spawnProjectile(self.attack, self.r, d, mods)
     
