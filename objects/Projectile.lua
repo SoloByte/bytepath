@@ -19,6 +19,17 @@ function Projectile:new(area, x, y, opts)
 
     self.target = nil
 
+    if self.passives.shield then
+        self.orbit_distance = random(32, 64)
+        self.orbit_speed = random(-6, 6)
+        self.orbit_offset = random(0, 2 * math.pi)
+
+        self.invisible = true
+        self.timer:after(0.05, function () self.invisible = false end)
+        self.timer:after(6, function () self:die() end)
+    end
+
+
     if self.attack == "Homing" or self.attack == "Swarm" then
         self.timer:every(0.02, function ()
             self.area:addGameObject(
@@ -57,7 +68,21 @@ function Projectile:new(area, x, y, opts)
                 self.timer:tween(0.5, self, {r = self.r - angle}, "linear")
             end)
         end)
+    
+        elseif self.passives.slow_to_fast then
+            local initial_v = self.v
+            self.timer:tween("slow_fast_first", 0.15, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic", function ()
+                self.timer:tween("slow_fast_second", 0.3, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic")
+            end)
+        elseif self.passives.fast_to_slow then
+            local initial_v = self.v
+            self.timer:tween("fast_slow_first", 0.15, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic", function ()
+                self.timer:tween("fast_slow_second", 0.3, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic")
+            end)
     end
+
+
+    self.previous_x, self.previous_y = self.collider:getPosition()
 end
 
 
@@ -94,7 +119,19 @@ function Projectile:update(dt)
     end
 
 
-    
+    if self.passives.shield then
+        local player = current_room.player
+        if player then
+            self.collider:setPosition(
+                player.x + self.orbit_distance * math.cos(time * self.orbit_speed + self.orbit_offset),
+                player.y + self.orbit_distance * math.sin(time * self.orbit_speed + self.orbit_offset)
+            )
+
+            local x, y = self.collider:getPosition()
+            local dx, dy = x - self.previous_x, y - self.previous_y
+            self.r = math.atan2(dy, dx)
+        end
+    end
 
     if self:checkBounds() then
         self:die()
@@ -109,9 +146,12 @@ function Projectile:update(dt)
             self:die()
         end
     end
+
+    self.previous_x, self.previous_y = self.collider:getPosition()
 end
 
 function Projectile:draw()
+    if self.invisible then return end
     pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
     if self.attack == "Homing" or self.attack == "Swarm" then

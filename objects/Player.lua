@@ -75,6 +75,8 @@ function Player:new(area, x, y, opts)
     self.stat_boost_duration_multiplier = 1.0
     self.angle_change_frequency_multiplier = 1.0
     self.projectile_waviness_multiplier = 1.0
+    self.projectile_acceleration_multiplier = 1.0
+    self.projectile_deceleration_multiplier = 1.0
 
     --flats
     self.flat_hp = 0
@@ -114,6 +116,8 @@ function Player:new(area, x, y, opts)
     self.spawn_double_sp_chance = 0
     self.drop_double_ammo_chance = 0
 
+    self.shield_projectile_chance = 0
+
     self.increased_luck_while_boosting = false
     self.luck_boosting = false
     self.invulnerability_while_boosting = false
@@ -122,7 +126,8 @@ function Player:new(area, x, y, opts)
     self.projectile_90_degree_change = false
     self.projectile_random_degree_change = false
     self.projectile_wavy = false
-
+    self.slow_to_fast = false
+    self.fast_to_slow = false
 
 
 
@@ -178,6 +183,10 @@ function Player:generateChances()
 end
 
 function Player:shoot()
+    local mods = {
+        shield = self.chances.shield_projectile_chance:next()
+    }
+
     local d = self.w * 1.2
 
     self.area:addGameObject("ShootEffect", 
@@ -187,46 +196,46 @@ function Player:shoot()
 
     d = d * 1.5
     if self.attack == "Neutral" then
-        self:spawnProjectile(self.attack, self.r, d)
+        self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "Sniper" then
-        self:spawnProjectile(self.attack, self.r, d, 300)
+        self:spawnProjectile(self.attack, self.r, d, mods, 1.5) --------
 
     elseif self.attack == "Homing" then
-        self:spawnProjectile(self.attack, self.r, d)
+        self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "Swarm" then
         for i = 1, 6 do
             local angle = self.r + random(-math.pi * 0.2, math.pi * 0.2)
-            self:spawnProjectile(self.attack, angle, d, random(180, 220))
+            self:spawnProjectile(self.attack, angle, d, mods, random(0.9, 1.1)) -------
         end
 
     elseif self.attack == "Double" then
-        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
-        self:spawnProjectile(self.attack, self.r - math.pi/12, d)
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d, mods)
+        self:spawnProjectile(self.attack, self.r - math.pi/12, d, mods)
     
     elseif self.attack == "Triple" then
-        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
-        self:spawnProjectile(self.attack, self.r, d)
-        self:spawnProjectile(self.attack, self.r - math.pi/12, d)
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d, mods)
+        self:spawnProjectile(self.attack, self.r, d, mods)
+        self:spawnProjectile(self.attack, self.r - math.pi/12, d, mods)
 
     elseif self.attack == "Spread" then
         local max_angle = math.pi / 8
         local rand_angle = random(-max_angle, max_angle)
         local accuracy = self.r + rand_angle
-        self:spawnProjectile(self.attack, accuracy, d)
+        self:spawnProjectile(self.attack, accuracy, d, mods)
 
     elseif self.attack == "Rapid" then
-        self:spawnProjectile(self.attack, self.r, d)
+        self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "Back" then
-        self:spawnProjectile(self.attack, self.r, d)
-        self:spawnProjectile(self.attack, self.r + math.pi, d)
+        self:spawnProjectile(self.attack, self.r, d, mods)
+        self:spawnProjectile(self.attack, self.r + math.pi, d, mods)
 
     elseif self.attack == "Side" then
-        self:spawnProjectile(self.attack, self.r + math.pi * 0.5, d)
-        self:spawnProjectile(self.attack, self.r + math.pi/12, d)
-        self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d)
+        self:spawnProjectile(self.attack, self.r + math.pi * 0.5, d, mods)
+        self:spawnProjectile(self.attack, self.r + math.pi/12, d, mods)
+        self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d, mods)
     end
 
     self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
@@ -690,25 +699,30 @@ function Player:spawnHasteArea()
     self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
 end
 
-function Player:spawnProjectile(atk, rot, dis, vel)
+function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
     {
         r = rot or 0, 
         attack = atk, 
-        v = vel or 200, 
+        v = 200 * (vel_mp or 1), 
         multipliers = {
             speed = self.projectile_speed_mutliplier.value,
             size = self.projectile_size_mutliplier,
             angle_change_frequency = self.angle_change_frequency_multiplier,
-            wavy_amplitude = self.projectile_waviness_multiplier
+            wavy_amplitude = self.projectile_waviness_multiplier,
+            acceleration_multiplier = self.projectile_acceleration_multiplier,
+            deceleration_multiplier = self.projectile_deceleration_multiplier,
         },
 
         passives = {
             degree_change_90 = self.projectile_90_degree_change,
             random_degree_change = self.projectile_random_degree_change,
-            wavy = self.projectile_wavy
+            wavy = self.projectile_wavy,
+            slow_to_fast = self.slow_to_fast,
+            fast_to_slow = self.fast_to_slow,
+            shield = mods.shield or false
         }
     })
 end

@@ -28,6 +28,14 @@ function table.keys(t)
     return keys
 end
 
+
+function table.merge(t1, t2)
+    local new_table = {}
+    for key, value in pairs(t1) do new_table[key] = value end
+    for key, value in pairs(t2) do new_table[key] = value end
+    return new_table
+end
+
 function random(min, max)
     local min, max = min or 0, max or 1
     return (min > max and (love.math.random()*(min - max) + max)) or (love.math.random()*(max - min) + min)
