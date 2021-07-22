@@ -26,9 +26,16 @@ function Projectile:new(area, x, y, opts)
 
         self.invisible = true
         self.timer:after(0.05, function () self.invisible = false end)
-        self.timer:after(6, function () self:die() end)
+        self.timer:after(6  * self.multipliers.duration_multiplier, function () self:die() end)
     end
 
+    if self.attack == "Blast" then
+        self.damage = 75
+        self.color = table.random(negative_colors)
+        if not self.passives.shield then
+            self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
+        end
+    end
 
     if self.attack == "Homing" or self.attack == "Swarm" then
         self.timer:every(0.02, function ()
@@ -69,6 +76,7 @@ function Projectile:new(area, x, y, opts)
             end)
         end)
     
+        -- use "self.multipliers.duration_multiplier" here too ?
         elseif self.passives.slow_to_fast then
             local initial_v = self.v
             self.timer:tween("slow_fast_first", 0.15, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic", function ()

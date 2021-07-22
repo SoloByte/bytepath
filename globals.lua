@@ -28,6 +28,7 @@ attacks = {
     ["Homing"] = {cooldown = 0.56, ammo = 4, abbrevation = 'H', color = skill_point_color},
     ["Sniper"] = {cooldown = 0.5, ammo = 3, abbrevation = 'Sn', color = boost_color},
     ["Swarm"] = {cooldown = 2.5, ammo = 15, abbrevation = 'Sw', color = skill_point_color},
+    ['Blast'] = {cooldown = 0.64, ammo = 6, abbreviation = 'W', color = default_color},
 }
 
 

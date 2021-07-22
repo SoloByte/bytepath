@@ -77,6 +77,7 @@ function Player:new(area, x, y, opts)
     self.projectile_waviness_multiplier = 1.0
     self.projectile_acceleration_multiplier = 1.0
     self.projectile_deceleration_multiplier = 1.0
+    self.projectile_duration_multiplier = 1.0
 
     --flats
     self.flat_hp = 0
@@ -199,7 +200,8 @@ function Player:shoot()
         self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "Sniper" then
-        self:spawnProjectile(self.attack, self.r, d, mods, 1.5) --------
+        self:spawnProjectile(self.attack, self.r, d, mods, 1.5)
+        camera:shake(3, 40, 0.3)
 
     elseif self.attack == "Homing" then
         self:spawnProjectile(self.attack, self.r, d, mods)
@@ -207,7 +209,7 @@ function Player:shoot()
     elseif self.attack == "Swarm" then
         for i = 1, 6 do
             local angle = self.r + random(-math.pi * 0.2, math.pi * 0.2)
-            self:spawnProjectile(self.attack, angle, d, mods, random(0.9, 1.1)) -------
+            self:spawnProjectile(self.attack, angle, d, mods, random(0.9, 1.1))
         end
 
     elseif self.attack == "Double" then
@@ -236,6 +238,12 @@ function Player:shoot()
         self:spawnProjectile(self.attack, self.r + math.pi * 0.5, d, mods)
         self:spawnProjectile(self.attack, self.r + math.pi/12, d, mods)
         self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d, mods)
+    elseif self.attack == "Blast" then
+        for i = 1, 12 do
+            local angle = self.r + random(-math.pi/6, math.pi/6)
+            self:spawnProjectile(self.attack, angle, d, mods, random(2.5, 3)) -------
+        end
+        camera:shake(4, 60, 0.4)
     end
 
     self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
@@ -714,6 +722,7 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
             wavy_amplitude = self.projectile_waviness_multiplier,
             acceleration_multiplier = self.projectile_acceleration_multiplier,
             deceleration_multiplier = self.projectile_deceleration_multiplier,
+            duration_multiplier = self.projectile_duration_multiplier,
         },
 
         passives = {
