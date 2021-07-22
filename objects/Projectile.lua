@@ -129,10 +129,36 @@ function Projectile:new(area, x, y, opts)
 end
 
 
+function Projectile:checkBounds()
+    if self.bounce and self.bounce > 0 then
+        if self.x < 0 then
+            self.bounce = self.bounce - 1
+            self.r = math.pi - self.r
+        elseif self.x > gw then
+            self.bounce = self.bounce - 1
+            self.r = math.pi - self.r
+        end
+        
+        if self.y < 0 then
+            self.bounce = self.bounce - 1
+            self.r = 2 * math.pi - self.r
+        elseif self.y > gh then
+            self.bounce = self.bounce - 1
+            self.r = 2 * math.pi - self.r
+        end
+
+        return false
+    else
+        return self.x < 0 or self.y < 0 or self.x > gw or self.y > gh
+    end
+end
 
 function Projectile:update(dt)
     Projectile.super.update(self, dt)
 
+    if self:checkBounds() then
+        self:die()
+    end
     
     if self.attack == "Spin" then
         self.r = self.r + self.rv * dt
@@ -179,10 +205,6 @@ function Projectile:update(dt)
         end
     end
 
-    if self:checkBounds() then
-        self:die()
-    end
-
     if self.collider:enter("Enemy") then
         local col_info = self.collider:getEnterCollisionData("Enemy")
         local object = col_info.collider:getObject()
@@ -209,7 +231,9 @@ function Projectile:draw()
     else
         love.graphics.setLineWidth(self.s - self.s * 0.25)
         
-        love.graphics.setColor(self.color)
+        if self.attack == 'Spread' then love.graphics.setColor(table.random(all_colors))
+        elseif self.attack == 'Bounce' then love.graphics.setColor(table.random(default_colors)) 
+        else love.graphics.setColor(self.color) end
         love.graphics.line(self.x, self.y, self.x + 2 * self.s, self.y)
         
         love.graphics.setColor(default_color)

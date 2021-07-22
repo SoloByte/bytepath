@@ -56,7 +56,8 @@ function Director:new(stage)
         {"Swarm", 5},
         {"Blast", 10},
         {"Spin", 10},
-        {"Flame", 10}
+        {"Flame", 10},
+        {"Bounce", 15}
     )
 
     self.resource_spawn_chances = chanceList(

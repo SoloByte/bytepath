@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Flame")
+    self:setAttack("Neutral")
 
 
     --treeToPlayer(self)
@@ -185,7 +185,8 @@ end
 
 function Player:shoot()
     local mods = {
-        shield = self.chances.shield_projectile_chance:next()
+        shield = self.chances.shield_projectile_chance:next(),
+        bounce = 0
     }
 
     local d = self.w * 1.2
@@ -206,6 +207,10 @@ function Player:shoot()
     elseif self.attack == "Homing" then
         self:spawnProjectile(self.attack, self.r, d, mods)
 
+    elseif self.attack == "Bounce" then
+        mods.bounce = 4
+        self:spawnProjectile(self.attack, self.r, d, mods)
+    
     elseif self.attack == "Swarm" then
         for i = 1, 6 do
             local angle = self.r + random(-math.pi * 0.2, math.pi * 0.2)
@@ -724,6 +729,7 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
         r = rot or 0, 
         attack = atk, 
         v = 200 * (vel_mp or 1), 
+        bounce = mods.bounce,
         multipliers = {
             speed = self.projectile_speed_mutliplier.value,
             size = self.projectile_size_mutliplier,
