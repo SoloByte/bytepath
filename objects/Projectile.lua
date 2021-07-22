@@ -19,24 +19,6 @@ function Projectile:new(area, x, y, opts)
 
     self.target = nil
 
-    if self.passives.shield then
-        self.orbit_distance = random(32, 64)
-        self.orbit_speed = random(-6, 6)
-        self.orbit_offset = random(0, 2 * math.pi)
-
-        self.invisible = true
-        self.timer:after(0.05, function () self.invisible = false end)
-        self.timer:after(6  * self.multipliers.duration_multiplier, function () self:die() end)
-    end
-
-    if self.attack == "Blast" then
-        self.damage = 75
-        self.color = table.random(negative_colors)
-        if not self.passives.shield then
-            self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
-        end
-    end
-
     if self.attack == "Homing" or self.attack == "Swarm" then
         self.timer:every(0.02, function ()
             self.area:addGameObject(
@@ -46,6 +28,31 @@ function Projectile:new(area, x, y, opts)
                 {parent = self, d = random(0.1, 0.15), r = random(1, 3), color = skill_point_color}
             )
         end)
+
+    elseif self.attack == "Blast" then
+        self.damage = 75
+        self.color = table.random(negative_colors)
+        if not self.passives.shield then
+            self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
+        end
+
+    elseif self.attack == "Spin" then
+        self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
+        if not self.passives.shield then
+            self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:die() end)
+
+            self.timer:every(0.05, function ()
+                self.area:addGameObject(
+                    "ProjectileTrail", 
+                    self.x, self.y, 
+                    {
+                        color = self.color, 
+                        s = self.s, 
+                        r = Vector(self.collider:getLinearVelocity()):angleTo()
+                    }
+                )
+            end)
+        end
     end
 
     if self.passives.degree_change_90 then
@@ -60,10 +67,12 @@ function Projectile:new(area, x, y, opts)
                 end)
             end)
         end)
+
     elseif self.passives.random_degree_change then
         self.timer:every(0.25 / self.multipliers.angle_change_frequency, function ()
             self.r = self.r + random(-math.pi * 0.5, math.pi * 0.5)
         end)
+
     elseif self.passives.wavy then
         local direction = table.random({-1, 1})
         self.timer:tween(0.25, self, {r = self.r + direction * (math.pi / 8) * self.multipliers.wavy_amplitude}, "linear", function ()
@@ -76,17 +85,26 @@ function Projectile:new(area, x, y, opts)
             end)
         end)
     
-        -- use "self.multipliers.duration_multiplier" here too ?
-        elseif self.passives.slow_to_fast then
-            local initial_v = self.v
-            self.timer:tween("slow_fast_first", 0.15, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic", function ()
-                self.timer:tween("slow_fast_second", 0.3, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic")
-            end)
-        elseif self.passives.fast_to_slow then
-            local initial_v = self.v
-            self.timer:tween("fast_slow_first", 0.15, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic", function ()
-                self.timer:tween("fast_slow_second", 0.3, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic")
-            end)
+    elseif self.passives.slow_to_fast then -- use "self.multipliers.duration_multiplier" here too ?
+        local initial_v = self.v
+        self.timer:tween("slow_fast_first", 0.15, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic", function ()
+            self.timer:tween("slow_fast_second", 0.3, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic")
+        end)
+
+    elseif self.passives.fast_to_slow then
+        local initial_v = self.v
+        self.timer:tween("fast_slow_first", 0.15, self, {v = initial_v * 2 * self.multipliers.acceleration_multiplier}, "in-out-cubic", function ()
+            self.timer:tween("fast_slow_second", 0.3, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic")
+        end)
+
+    elseif self.passives.shield then
+        self.orbit_distance = random(32, 64)
+        self.orbit_speed = random(-6, 6)
+        self.orbit_offset = random(0, 2 * math.pi)
+
+        self.invisible = true
+        self.timer:after(0.05, function () self.invisible = false end)
+        self.timer:after(6  * self.multipliers.duration_multiplier, function () self:die() end)
     end
 
 
@@ -99,6 +117,9 @@ function Projectile:update(dt)
     Projectile.super.update(self, dt)
 
     
+    if self.attack == "Spin" then
+        self.r = self.r + self.rv * dt
+    end
 
     if self.attack == "Homing" or self.attack == "Swarm" then
         --aquire target

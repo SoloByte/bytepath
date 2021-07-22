@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Neutral")
+    self:setAttack("Spin")
 
 
     --treeToPlayer(self)
@@ -229,7 +229,10 @@ function Player:shoot()
 
     elseif self.attack == "Rapid" then
         self:spawnProjectile(self.attack, self.r, d, mods)
-
+    
+    elseif self.attack == "Spin" then
+        self:spawnProjectile(self.attack, self.r, d, mods)
+    
     elseif self.attack == "Back" then
         self:spawnProjectile(self.attack, self.r, d, mods)
         self:spawnProjectile(self.attack, self.r + math.pi, d, mods)
