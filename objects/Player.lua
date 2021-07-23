@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Neutral")
+    self:setAttack("Lightning")
 
 
     --treeToPlayer(self)
@@ -188,18 +188,41 @@ function Player:shoot()
         shield = self.chances.shield_projectile_chance:next(),
         bounce = 0
     }
-
+    
     local d = self.w * 1.2
-
-    self.area:addGameObject("ShootEffect", 
-    self.x + d * math.cos(self.r), 
-    self.y + d * math.sin(self.r), 
-    {player = self, d = d})
 
     d = d * 1.5
     if self.attack == "Neutral" then
         self:spawnProjectile(self.attack, self.r, d, mods)
 
+    elseif self.attack == "Lightning" then
+        local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
+        local cx, cy = x1 + 24 * math.cos(self.r), y1 + 24 * math.sin(self.r)
+
+        --aquire target
+        local nearby_enemies = self.area:getAllGameObjectsThat(function (e)
+            return e.group == "enemy" and distanceSquared(e.x, e.y, cx, cy) < 4000 -- ~ 64 * 64
+        end)
+        table.sort(nearby_enemies, function (a, b)
+            return distanceSquared(a.x, a.y, cx, cy) < distanceSquared(b.x, b.y, cx, cy)
+        end)
+        local closest_enemy = nearby_enemies[1]
+
+        if closest_enemy then
+            self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+            closest_enemy:hit()
+            local x2, y2 = closest_enemy.x, closest_enemy.y
+            self.area:addGameObject("LightningLine", 0, 0, {x1 = x1, y1 = y1, x2 = x2, y2 = y2})
+            for i = 1, love.math.random(4, 8) do 
+                self.area:addGameObject("ExplodeParticle", x1, y1, 
+              {color = table.random({default_color, boost_color})}) 
+            end
+            for i = 1, love.math.random(4, 8) do 
+                    self.area:addGameObject("ExplodeParticle", x2, y2, 
+                {color = table.random({default_color, boost_color})}) 
+            end
+        end
+        return -- so the other shoot code isnt run
     elseif self.attack == "Sniper" then
         self:spawnProjectile(self.attack, self.r, d, mods, 1.5)
         camera:shake(3, 40, 0.3)
@@ -261,6 +284,7 @@ function Player:shoot()
         self:spawnProjectile(self.attack, self.r + math.pi * 0.5, d, mods)
         self:spawnProjectile(self.attack, self.r + math.pi/12, d, mods)
         self:spawnProjectile(self.attack, self.r - math.pi * 0.5, d, mods)
+
     elseif self.attack == "Blast" then
         for i = 1, 12 do
             local angle = self.r + random(-math.pi/6, math.pi/6)
@@ -268,6 +292,11 @@ function Player:shoot()
         end
         camera:shake(4, 60, 0.4)
     end
+
+    self.area:addGameObject("ShootEffect", 
+    self.x + d * math.cos(self.r), 
+    self.y + d * math.sin(self.r), 
+    {player = self, d = d})
 
     self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
 end

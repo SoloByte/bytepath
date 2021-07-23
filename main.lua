@@ -9,6 +9,7 @@ Camera = require "libs.hump.camera"
 Physics = require "libs.windfield"
 draft = require("libs.draft.draft")()
 Vector = require "libs.hump.vector"
+VectorLight = require "libs.hump.vector-light"
 
 require "libs.utf8"
 require "GameObject"
