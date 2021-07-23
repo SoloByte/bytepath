@@ -20,6 +20,10 @@ function table.random(t)
     return t[love.math.random(1, #t)]
 end
 
+function table.randomKey(t)
+    return table.random(table.keys(t))
+end
+
 function table.keys(t)
     local keys = {}
     for k,v in pairs(t) do

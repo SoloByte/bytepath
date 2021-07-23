@@ -11,7 +11,7 @@ function Projectile:new(area, x, y, opts)
     self.v = opts.v or 200
     self.v = self.v * (opts.multipliers.speed or 1)
     self.damage = opts.damage or 100
-    self.color = attacks[self.attack].color
+    self.color = opts.modulate or attacks[self.attack].color
     self.collider = self.area.world:newCircleCollider(self.x, self.y, self.s)
     self.collider:setObject(self)
     self.collider:setCollisionClass("Projectile")
@@ -19,13 +19,13 @@ function Projectile:new(area, x, y, opts)
 
     self.target = nil
 
-    if self.attack == "Homing" or self.attack == "Swarm" then
+    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or self.attack == "3Split" or self.attack == "4Split" then
         self.timer:every(0.02, function ()
             self.area:addGameObject(
                 "TrailParticle",
                 self.x - self.s * math.cos(self.r),
                 self.y - self.s * math.sin(self.r),
-                {parent = self, d = random(0.1, 0.15), r = random(1, 3), color = skill_point_color}
+                {parent = self, d = random(0.1, 0.15), r = random(1, 3), color = self.color}
             )
         end)
 
@@ -172,21 +172,81 @@ function Projectile:checkBounds()
             self:spawnSplitProjectile(1.5 * math.pi - angle, self.s)
             return true
         end
+    elseif self.attack == "3Split" then
+        if self.x < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(angle, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(0, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(-angle, self.s, table.randomKey(attacks))
+            return true
+        elseif self.x > gw then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(math.pi + angle, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(math.pi, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(math.pi - angle, self.s, table.randomKey(attacks))
+            return true
+        end
         
+        if self.y < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(0.5 * math.pi + angle, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(0.5 * math.pi, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(0.5 * math.pi - angle, self.s, table.randomKey(attacks))
+            return true
+        elseif self.y > gh then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(1.5 * math.pi + angle, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(1.5 * math.pi, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(1.5 * math.pi - angle, self.s, table.randomKey(attacks))
+            return true
+        end
+    elseif self.attack == "4Split" then
+        if self.x < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(angle, self.s)
+            self:spawnSplitProjectile(angle/2, self.s)
+            self:spawnSplitProjectile(-angle/2, self.s)
+            self:spawnSplitProjectile(-angle, self.s)
+            return true
+        elseif self.x > gw then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(math.pi + angle, self.s)
+            self:spawnSplitProjectile(math.pi + angle / 2, self.s)
+            self:spawnSplitProjectile(math.pi - angle / 2, self.s)
+            self:spawnSplitProjectile(math.pi - angle, self.s)
+            return true
+        end
+        
+        if self.y < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(0.5 * math.pi + angle, self.s)
+            self:spawnSplitProjectile(0.5 * math.pi + angle / 2, self.s)
+            self:spawnSplitProjectile(0.5 * math.pi - angle / 2, self.s)
+            self:spawnSplitProjectile(0.5 * math.pi - angle, self.s)
+            return true
+        elseif self.y > gh then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(1.5 * math.pi + angle, self.s)
+            self:spawnSplitProjectile(1.5 * math.pi + angle / 2, self.s)
+            self:spawnSplitProjectile(1.5 * math.pi - angle / 2, self.s)
+            self:spawnSplitProjectile(1.5 * math.pi - angle, self.s)
+            return true
+        end
     else
         return self.x < 0 or self.y < 0 or self.x > gw or self.y > gh
     end
 end
 
 
-function Projectile:spawnSplitProjectile(rot, dis)
+function Projectile:spawnSplitProjectile(rot, dis, atk)
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
     {
         r = rot or 0, 
-        attack = "Neutral", 
+        attack = atk or "Neutral", 
         v = self.v,
+        modulate = self.color,
         bounce = self.bounce,
         multipliers = self.multipliers,
         passives = self.passives
@@ -254,6 +314,17 @@ function Projectile:update(dt)
             local angle = math.pi / 4
             self:spawnSplitProjectile(self.r + angle, self.s)
             self:spawnSplitProjectile(self.r - angle, self.s)
+        elseif self.attack == "3Split" then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(self.r + angle, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(self.r, self.s, table.randomKey(attacks))
+            self:spawnSplitProjectile(self.r - angle, self.s, table.randomKey(attacks))
+        elseif self.attack == "4Split" then
+            local angle = math.pi / 2
+            self:spawnSplitProjectile(math.pi / 4, self.s)
+            self:spawnSplitProjectile(3*math.pi / 4, self.s)
+            self:spawnSplitProjectile(-math.pi / 4, self.s)
+            self:spawnSplitProjectile(-3*math.pi / 4, self.s)
         end
         if self.attack ~= "Sniper" then
             self:die()
@@ -267,7 +338,7 @@ function Projectile:draw()
     if self.invisible then return end
     pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
-    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" then
+    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or self.attack == "3Split" or self.attack == "4Split" then
         love.graphics.setColor(self.color)
         love.graphics.polygon("fill", self.x - 2.0 * self.s, self.y, self.x, self.y + 1.5 * self.s, self.x, self.y - 1.5 * self.s)
 

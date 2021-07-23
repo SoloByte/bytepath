@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Neutral")
+    self:setAttack("3Split")
 
 
     --treeToPlayer(self)
@@ -208,6 +208,12 @@ function Player:shoot()
         self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "2Split" then
+        self:spawnProjectile(self.attack, self.r, d, mods)
+    
+    elseif self.attack == "3Split" then
+        self:spawnProjectile(self.attack, self.r, d, mods)
+
+    elseif self.attack == "4Split" then
         self:spawnProjectile(self.attack, self.r, d, mods)
     
     elseif self.attack == "Bounce" then
@@ -731,7 +737,8 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
     {
         r = rot or 0, 
         attack = atk, 
-        v = 200 * (vel_mp or 1), 
+        v = 200 * (vel_mp or 1),
+        modulate = attacks[atk].color,
         bounce = mods.bounce,
         multipliers = {
             speed = self.projectile_speed_mutliplier.value,

@@ -32,7 +32,9 @@ attacks = {
     ["Spin"] = {cooldown = 0.32, ammo = 2, abbrevation = 'Sp', color = hp_color},
     ["Flame"] = {cooldown = 0.048, ammo = 0.4, abbrevation = 'F', color = skill_point_color},
     ["Bounce"] = {cooldown = 0.32, ammo = 4, abbrevation = 'Bn', color = default_color},
-    ["2Split"] = {cooldown = 0.32, ammo = 3, abbreviation = '2S', color = ammo_color},
+    ["2Split"] = {cooldown = 0.32, ammo = 3, abbrevation = '2S', color = ammo_color},
+    ["3Split"] = {cooldown = 0.5, ammo = 5, abbrevation = '3S', color = hp_color},
+    ["4Split"] = {cooldown = 0.4, ammo = 4, abbrevation = '4S', color = boost_color},
 }
 
 
