@@ -18,8 +18,9 @@ function Projectile:new(area, x, y, opts)
     self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
 
     self.target = nil
-
-    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or self.attack == "3Split" or self.attack == "4Split" then
+    self.explosion_radius = opts.explosion_radius or 100
+    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or 
+        self.attack == "3Split" or self.attack == "4Split" or self.attack == "Explode" then
         self.timer:every(0.02, function ()
             self.area:addGameObject(
                 "TrailParticle",
@@ -267,10 +268,12 @@ function Projectile:update(dt)
     if self.attack == "Homing" or self.attack == "Swarm" then
         --aquire target
         if not self.target then
-            local targets = self.area:getAllGameObjectsThat(function (e)
+            self.target = self.area:getGameObjectsInCircle(self.x, self.y, 400, "enemy", "random")
+            --[[cal targets = self.area:getAllGameObjectsThat(function (e)
                 return e.group == "enemy" and distanceSquared(e.x, e.y, self.x, self.y) < 16000
             end)
             self.target = table.remove(targets, love.math.random(1, #targets))
+            --]]
         end
 
         if self.target and self.target.dead then self.target = nil end
@@ -308,7 +311,9 @@ function Projectile:update(dt)
     if self.collider:enter("Enemy") then
         local col_info = self.collider:getEnterCollisionData("Enemy")
         local object = col_info.collider:getObject()
-        object:hit(self.damage)
+        if self.attack ~= "Explode" then
+            object:hit(self.damage)
+        end
         if object.dead then current_room.player:onKill() end
         if self.attack == "2Split" then
             local angle = math.pi / 4
@@ -338,7 +343,8 @@ function Projectile:draw()
     if self.invisible then return end
     pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
-    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or self.attack == "3Split" or self.attack == "4Split" then
+    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or 
+        self.attack == "3Split" or self.attack == "4Split" or self.attack == "Explode" then
         love.graphics.setColor(self.color)
         love.graphics.polygon("fill", self.x - 2.0 * self.s, self.y, self.x, self.y + 1.5 * self.s, self.x, self.y - 1.5 * self.s)
 
@@ -366,5 +372,17 @@ end
 
 function Projectile:die()
     self.dead = true
-    self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = 3 * self.s})
+    if self.attack == "Explode" then
+        self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = 12 * self.s})
+        for i = 1, love.math.random(4, 8) do 
+            self.area:addGameObject("ExplodeParticle", self.x, self.y, {color = self.color, s = random(5, 10), v = random(150, 200)}) 
+        end
+        local targets = self.area:getGameObjectsInCircle(self.x, self.y, self.explosion_radius, "enemy", "all")
+        for i = 1, #targets do
+            local target = targets[i]
+            target:hit()
+        end
+    else
+        self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = 3 * self.s})
+    end
 end

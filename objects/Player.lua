@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Lightning")
+    self:setAttack("Explode")
 
 
     --treeToPlayer(self)
@@ -199,14 +199,7 @@ function Player:shoot()
         local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
         local cx, cy = x1 + 24 * math.cos(self.r), y1 + 24 * math.sin(self.r)
 
-        --aquire target
-        local nearby_enemies = self.area:getAllGameObjectsThat(function (e)
-            return e.group == "enemy" and distanceSquared(e.x, e.y, cx, cy) < 4000 -- ~ 64 * 64
-        end)
-        table.sort(nearby_enemies, function (a, b)
-            return distanceSquared(a.x, a.y, cx, cy) < distanceSquared(b.x, b.y, cx, cy)
-        end)
-        local closest_enemy = nearby_enemies[1]
+        local closest_enemy = self.area:getGameObjectsInCircle(cx, cy, 64, "enemy", "closest")--nearby_enemies[1]
 
         if closest_enemy then
             self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
@@ -228,6 +221,9 @@ function Player:shoot()
         camera:shake(3, 40, 0.3)
 
     elseif self.attack == "Homing" then
+        self:spawnProjectile(self.attack, self.r, d, mods)
+    
+    elseif self.attack == "Explode" then
         self:spawnProjectile(self.attack, self.r, d, mods)
 
     elseif self.attack == "2Split" then

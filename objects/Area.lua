@@ -58,6 +58,36 @@ function Area:getAllGameObjectsThat(filter)
     end
     return out
 end
+
+
+function Area:getGameObjectsInCircle(x, y, r, group, filter)
+    local g = group or "enemy"
+    local f = filter or "random"
+    local radius = r or 128
+    local r_sq = radius * radius
+
+    local targets = self:getAllGameObjectsThat(function (e)
+        return e.group == g and distanceSquared(e.x, e.y, x, y) < r_sq
+    end)
+
+    if f == "all" then
+        return targets
+    elseif f == "random" then
+        return table.random(targets)
+    elseif f == "closest" then
+        table.sort(targets, function (a, b)
+            return distanceSquared(a.x, a.y, x, y) < distanceSquared(b.x, b.y, x, y)
+        end)
+        return targets[1]
+    elseif f == "furthest" then
+        table.sort(targets, function (a, b)
+            return distanceSquared(a.x, a.y, x, y) > distanceSquared(b.x, b.y, x, y)
+        end)
+        return targets[#targets]
+    end
+end
+
+
 function Area:addGameObject(game_object_type, x, y, opts)
     local opts = opts or {}
     local game_object = _G[game_object_type](self, x or 0, y or 0, opts)

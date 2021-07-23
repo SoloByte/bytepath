@@ -18,7 +18,7 @@ function LightningLine:new(area, x, y, opts)
 
     self:generate()
     
-    self.duration = opts.duration or 2
+    self.duration = opts.duration or 0.15
     self.alpha = 1
     self.timer:tween(self.duration, self, {alpha = 0}, "in-out-cubic", function() self.dead = true end)
 end
