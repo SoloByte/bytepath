@@ -207,6 +207,9 @@ function Player:shoot()
     elseif self.attack == "Homing" then
         self:spawnProjectile(self.attack, self.r, d, mods)
 
+    elseif self.attack == "2Split" then
+        self:spawnProjectile(self.attack, self.r, d, mods)
+    
     elseif self.attack == "Bounce" then
         mods.bounce = 4
         self:spawnProjectile(self.attack, self.r, d, mods)

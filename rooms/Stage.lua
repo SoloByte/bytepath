@@ -42,6 +42,14 @@ function Stage:new()
         self.area:addGameObject("Shooter", random(25, gw - 25), random(25, gh - 25))
     end)
 
+    input:bind("8", function ()
+        slow(0.5, 5.0)
+    end)
+
+    input:bind("9", function ()
+        slow(0.1, 5.0)
+    end)
+
     self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
     
     self.director = Director(self)

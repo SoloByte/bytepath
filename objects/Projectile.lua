@@ -148,9 +148,49 @@ function Projectile:checkBounds()
         end
 
         return false
+    elseif self.attack == "2Split" then
+        if self.x < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(angle, self.s)
+            self:spawnSplitProjectile(-angle, self.s)
+            return true
+        elseif self.x > gw then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(math.pi + angle, self.s)
+            self:spawnSplitProjectile(math.pi - angle, self.s)
+            return true
+        end
+        
+        if self.y < 0 then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(0.5 * math.pi + angle, self.s)
+            self:spawnSplitProjectile(0.5 * math.pi - angle, self.s)
+            return true
+        elseif self.y > gh then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(1.5 * math.pi + angle, self.s)
+            self:spawnSplitProjectile(1.5 * math.pi - angle, self.s)
+            return true
+        end
+        
     else
         return self.x < 0 or self.y < 0 or self.x > gw or self.y > gh
     end
+end
+
+
+function Projectile:spawnSplitProjectile(rot, dis)
+    self.area:addGameObject("Projectile", 
+    self.x + dis * math.cos(rot), 
+    self.y + dis * math.sin(rot), 
+    {
+        r = rot or 0, 
+        attack = "Neutral", 
+        v = self.v,
+        bounce = self.bounce,
+        multipliers = self.multipliers,
+        passives = self.passives
+    })
 end
 
 function Projectile:update(dt)
@@ -210,6 +250,11 @@ function Projectile:update(dt)
         local object = col_info.collider:getObject()
         object:hit(self.damage)
         if object.dead then current_room.player:onKill() end
+        if self.attack == "2Split" then
+            local angle = math.pi / 4
+            self:spawnSplitProjectile(self.r + angle, self.s)
+            self:spawnSplitProjectile(self.r - angle, self.s)
+        end
         if self.attack ~= "Sniper" then
             self:die()
         end
@@ -222,7 +267,7 @@ function Projectile:draw()
     if self.invisible then return end
     pushRotate(self.x, self.y, self.r)--Vector(self.collider:getLinearVelocity()):angleTo()
 
-    if self.attack == "Homing" or self.attack == "Swarm" then
+    if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" then
         love.graphics.setColor(self.color)
         love.graphics.polygon("fill", self.x - 2.0 * self.s, self.y, self.x, self.y + 1.5 * self.s, self.x, self.y - 1.5 * self.s)
 
