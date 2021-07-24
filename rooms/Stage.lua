@@ -95,6 +95,8 @@ function Stage:draw()
         self:drawAmmo()
         self:drawCycle()
 
+        self.area.world:draw(128)
+
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setBlendMode("alpha", "premultiplied")

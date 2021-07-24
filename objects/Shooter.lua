@@ -53,6 +53,7 @@ function Shooter:new(area, x,y,opts)
 end
 
 function Shooter:hit(damage)
+    if self.dead then return end
     local dmg = damage or 100
     self.hp = self.hp - dmg
     if self.hp <= 0 then

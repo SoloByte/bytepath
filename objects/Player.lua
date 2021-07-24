@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Explode")
+    self:setAttack("Laser")
 
 
     --treeToPlayer(self)
@@ -216,6 +216,11 @@ function Player:shoot()
             end
         end
         return -- so the other shoot code isnt run
+    elseif self.attack == "Laser" then
+        local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
+        self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+        self.area:addGameObject("LaserLine", x1, y1, {r = self.r, color = attacks[self.attack].color})
+        return
     elseif self.attack == "Sniper" then
         self:spawnProjectile(self.attack, self.r, d, mods, 1.5)
         camera:shake(3, 40, 0.3)
