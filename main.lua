@@ -62,7 +62,8 @@ function love.load()
     input:bind("down", "down")
 
     --memory
-    input:bind('f1', function()
+    
+    input:bind('f12', function()
         print("Before collection: " .. collectgarbage("count")/1024)
         collectgarbage()
         print("After collection: " .. collectgarbage("count")/1024)
@@ -72,7 +73,7 @@ function love.load()
         print("-------------------------------------")
     end)
 
-    input:bind("f2", function ()
+    input:bind("f1", function ()
         gotoRoom("Stage")
     end)
 

@@ -150,7 +150,7 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Laser")
+    self:setAttack("Neutral")
 
 
     --treeToPlayer(self)

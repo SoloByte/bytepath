@@ -14,7 +14,6 @@ function LaserLine:new(area, x, y, opts)
     self.dur = opts.dur or 0.2
     self.timer:tween(self.dur, self, {w = 0, gap = self.gap * 2, alpha = 0}, "in-out-cubic", function() self.dead = true end)
     --self.timer:every(0.05, function() self:query() end, math.floor(self.dur / 0.05))
-    self.area.world:setQueryDebugDrawing(true)
     self:query()
     --self.collider = self.area.world:newRectangleCollider(self.x, self.y, self.d, self.w * 2)
     --self.collider:setPosition(self.x, self.y)
@@ -29,30 +28,34 @@ end
 
 function LaserLine:query()
     --local w_half = self.w * 0.5
-
+    local world = self.area.world.box2d_world
+    
     local cx, cy = self.x - 16 * math.cos(self.r), self.y - 16 * math.sin(self.r)
     local xr, yr = cx + self.gap * math.cos(self.r - math.pi * 0.5), cy + self.gap * math.sin(self.r - math.pi * 0.5)
     local xl, yl = cx + self.gap * math.cos(self.r + math.pi * 0.5), cy + self.gap * math.sin(self.r + math.pi * 0.5)
     local targets
 
+    world:rayCast(xl, yl, xl + self.d * math.cos(self.r), yl + self.d * math.sin(self.r), function (fixture, x, y, xn, yn, fraction)
+        
+        print("Collider: ", fixture)
+        return 1
+    end)
+    
 
     targets = self.area.world:queryLine(
         xl, yl, 
         xl + self.d * math.cos(self.r), 
-        yl + self.d * math.sin(self.r), 
-        {"Enemy", "EnemyProjectile"})
+        yl + self.d * math.sin(self.r), {"Enemy", "EnemyProjectile"})
     
     table.merge(targets, self.area.world:queryLine(
         cx, cy, 
         cx + self.d * math.cos(self.r), 
-        cy + self.d * math.sin(self.r), 
-        {"Enemy", "EnemyProjectile"}))
+        cy + self.d * math.sin(self.r), {"Enemy", "EnemyProjectile"}))
     
     table.merge(targets, self.area.world:queryLine(
         xr, yr, 
         xr + self.d * math.cos(self.r), 
-        yr + self.d * math.sin(self.r), 
-        {"Enemy", "EnemyProjectile"}))
+        yr + self.d * math.sin(self.r), {"Enemy", "EnemyProjectile"}))
 
     for i = 1, #targets do
         local obj = targets[i]:getObject()

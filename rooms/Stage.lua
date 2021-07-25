@@ -50,9 +50,19 @@ function Stage:new()
         slow(0.1, 5.0)
     end)
 
+    self.draw_collision = false
+    input:bind("f2", function ()
+        self.draw_collision = not self.draw_collision
+        self.area.world:setQueryDebugDrawing(self.draw_collision)
+    end)
+    
+    
+
     self.player = self.area:addGameObject("Player", gw * 0.5, gh * 0.5)
     
     self.director = Director(self)
+
+    
     --[[
     input:bind("f4", function ()
         self.player.dead = true
@@ -95,7 +105,9 @@ function Stage:draw()
         self:drawAmmo()
         self:drawCycle()
 
-        self.area.world:draw(128)
+        if self.draw_collision then
+            self.area.world:draw(128)
+        end
 
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)

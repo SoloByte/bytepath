@@ -63,7 +63,7 @@ function Director:new(stage)
         {"4Split", 5},
         {"Lightning", 5},
         {"Explode", 5},
-        {"Laser", 5}
+        {"Laser", 0}
     )
 
     self.resource_spawn_chances = chanceList(
