@@ -38,21 +38,11 @@ function Player:new(area, x, y, opts)
 
     self.inside_haste_area = false
 
+    self.energy_shield_recharge_cooldown = 2
+    self.energy_shield_recharge_amount = 1
 
-    local function generateAttackTable(v)
-        local t = {}
-        for _, value in pairs(attacks) do
-            t[value.name] = v
-        end
-        return t
-    end
-
-    self.attack_spawn_chance_multipliers = generateAttackTable(1)
-    self.attack_spawn_chance_multipliers["Laser"] = 0
-
-    self.start_attack_chances = generateAttackTable(false)
-    self.start_attack_chances["Neutral"] = true
-
+    self.drop_mine_interval = 0.5
+    self.drop_mine_timer = 0
 
     --multipliers
     self.hp_multiplier = 1
@@ -73,6 +63,9 @@ function Player:new(area, x, y, opts)
     self.cycle_speed_multiplayer = Stat(1)
     self.increased_cycle_speed_while_boosting = false
 
+    self.energy_shield_recharge_amount_multiplier = 1
+    self.energy_shield_recharge_cooldown_multiplier = 1
+    
     self.luck_multiplier = 1
     self.hp_spawn_chance_multiplier = 1.0
     self.sp_spawn_chance_multiplier = 1.0
@@ -142,9 +135,12 @@ function Player:new(area, x, y, opts)
     self.shield_projectile_chance = 0
     self.drop_mines_chance  = 0
 
+    self.added_chance_to_all_on_kill_events = 0
+
     self.increased_luck_while_boosting = false
     self.luck_boosting = false
     self.invulnerability_while_boosting = false
+    self.energy_shield = false
 
     --projectile passives
     self.projectile_90_degree_change = false
@@ -159,6 +155,8 @@ function Player:new(area, x, y, opts)
     self.projectiles_explode_on_expiration = false
     self.projectiles_explosions = false
 
+    --conversions
+    self.ammo_to_attack_speed = 0
 
     self.ammo_gain = 0
 
@@ -168,7 +166,49 @@ function Player:new(area, x, y, opts)
 
     self.boosting = false
     self.trail_color = skill_point_color
-    
+
+    self:changeShip(self.ship)
+
+    input:bind("f3", function () self:die() end)
+    input:bind("f4", function ()
+        local index = math.random(#self.ship_variants)
+        local ship = self.ship_variants[index]
+        self:changeShip(ship)
+    end)
+
+    local function generateAttackTable(v)
+        local t = {}
+        for _, value in pairs(attacks) do
+            t[value.name] = v
+        end
+        return t
+    end
+
+    --ATTACKS
+    self.attack_spawn_chance_multipliers = generateAttackTable(1)
+    self.attack_spawn_chance_multipliers["Laser"] = 0
+
+    self.start_attack_chances = generateAttackTable(false)
+    self.start_attack_chances["Neutral"] = true
+
+    local start_attacks = {}
+    for key, value in pairs(self.start_attack_chances) do
+        if value then
+            table.insert(start_attacks, key)
+        end
+    end
+
+    local start_attack = table.random(start_attacks)
+
+    self:setAttack(start_attack)
+    --self:setAttack("Explode")
+
+
+    --APPLY ALL STATS
+    --treeToPlayer(self)
+    self:setStats()
+    self:generateChances()
+
 
     self.projectile_multipliers = {
         speed = self.projectile_speed_mutliplier.value,
@@ -191,35 +231,6 @@ function Player:new(area, x, y, opts)
         explode_on_expiration = self.projectiles_explode_on_expiration,
         barrage_explosion = self.projectiles_explosions
     }
-
-    self.drop_mine_interval = 0.5
-    self.drop_mine_timer = 0
-    if self.drop_mines_chance > 0 then self.drop_mine_timer = self.drop_mine_interval end
-
-    self:changeShip(self.ship)
-
-    input:bind("f3", function () self:die() end)
-    input:bind("f4", function ()
-        local index = math.random(#self.ship_variants)
-        local ship = self.ship_variants[index]
-        self:changeShip(ship)
-    end)
-
-    local start_attacks = {}
-    for key, value in pairs(self.start_attack_chances) do
-        if value then
-            table.insert(start_attacks, key)
-        end
-    end
-
-    local start_attack = table.random(start_attacks)
-
-    self:setAttack(start_attack)
-    --self:setAttack("Explode")
-
-    --treeToPlayer(self)
-    self:setStats()
-    self:generateChances()
 end
 
 function Player:setStats()
@@ -234,15 +245,29 @@ function Player:setStats()
     --boost
     self.max_boost = (self.max_boost + self.flat_boost) * self.boost_multiplier
     self.boost = self.max_boost
+
+    --energy shield
+    if self.energy_shield then
+        self.invulnerability_time_multiplier = self.invulnerability_time_multiplier * 0.5
+    end
+
+    if self.drop_mines_chance > 0 then self.drop_mine_timer = self.drop_mine_interval end
 end
 
 function Player:generateChances()
     self.chances = {}
     for key, value in pairs(self) do
         if key:find("_chance") and type(value) == "number" then
-            self.chances[key] = chanceList(
+            if key:find('_on_kill') and value > 0 then
+                self.chances[key] = chanceList(
+                {true, math.ceil((value + self.added_chance_to_all_on_kill_events)* self.luck_multiplier)}, 
+                {false, 100 - math.ceil((value + self.added_chance_to_all_on_kill_events) * self.luck_multiplier)})
+            else
+                self.chances[key] = chanceList(
                 {true, math.ceil(value * self.luck_multiplier)}, 
                 {false, 100 - math.ceil(value * self.luck_multiplier)})
+            end
+            
         end
     end
 end
@@ -422,6 +447,17 @@ function Player:hit(damage, pos_x, pos_y)
     local x = pos_x or self.x
     local y = pos_y or self.y
 
+
+    if self.energy_shield then
+        dmg = dmg * 2
+        self.timer:after("es_cooldown", self.energy_shield_recharge_cooldown * self.energy_shield_recharge_cooldown_multiplier, function ()
+            self.timer:every("es_amount", 0.25, function ()
+                self:addHP(self.energy_shield_recharge_amount * self.energy_shield_recharge_amount_multiplier)
+                return self.hp < self.max_hp
+            end)
+        end)
+    end
+
     if dmg < self.hp then 
         self:spawnParticles(4, 8, x, y) 
 
@@ -429,7 +465,7 @@ function Player:hit(damage, pos_x, pos_y)
             self.invincible = true
             self.timer:after(
                 "invincible", 
-                2 * self.invulnerability_time_multiplier, 
+                2 * self.invulnerability_time_multiplier , 
                 function () self.invincible = false end)
             self.timer:every("invincible", 0.04, function ()
                 self.invisible = not self.invisible
@@ -663,6 +699,8 @@ function Player:die()
     self.timer:cancel("pspd_boost")
     self.timer:cancel("pspd_inhibit")
     self.timer:cancel("boost_chances")
+    self.timer:cancel("es_cooldown")
+    self.timer:cancel("es_amount")
 
     self.dead = true
 

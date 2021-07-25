@@ -161,8 +161,12 @@ function Stage:drawHP()
     local hp, max_hp = self.player.hp, self.player.max_hp
     local x = gw * 0.5 - 52
     local y = gh - 16
-    self:drawBar(x, y, 48, 4, (hp / max_hp), hp_color, 0.125)
-    self:drawText("HP", x + 24, y - 8)
+    local color = hp_color
+    if self.player.energy_shield then color = default_color end
+    local text = "HP"
+    if self.player.energy_shield then text = "ES" end
+    self:drawBar(x, y, 48, 4, (hp / max_hp), color, 0.125)
+    self:drawText(text, x + 24, y - 8)
     self:drawText(math.floor(hp) .. "/" .. math.floor(max_hp), x + 24, y + 10)
 end
 
