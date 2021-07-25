@@ -42,30 +42,39 @@ function Director:new(stage)
             {"Shooter", random(2, 12)}
         )
     end
-
+    
+    local asc = stage.player.attack_spawn_chance_multipliers
+    --[[
+    local chance_list = {}
+    for key, value in pairs(asc) do
+        table.insert(chance_list, {[key] = 5 * value})
+    end
+    self.attack_spawn_chances = chanceListTable(chance_list)
+    --]]
+    ---[[
     self.attack_spawn_chances = chanceList(
         --{"Neutral", 0},
-        {"Double", 20},
-        {"Triple", 15},
-        {"Spread",15},
-        {"Rapid", 5},
-        {"Side", 10},
-        {"Back", 10},
-        {"Homing", 10},
-        {"Sniper", 15},
-        {"Swarm", 5},
-        {"Blast", 10},
-        {"Spin", 10},
-        {"Flame", 10},
-        {"Bounce", 15},
-        {"2Split", 5},
-        {"3Split", 5},
-        {"4Split", 5},
-        {"Lightning", 5},
-        {"Explode", 5},
-        {"Laser", 0}
+        {"Double",      5 * asc["Double"]},
+        {"Triple",      5 * asc["Triple"]},
+        {"Spread",      5 * asc["Spread"]},
+        {"Rapid",       5 * asc["Rapid"]},
+        {"Side",        5 * asc["Side"]},
+        {"Back",        5 * asc["Back"]},
+        {"Homing",      5 * asc["Homing"]},
+        {"Sniper",      5 * asc["Sniper"]},
+        {"Swarm",       5 * asc["Swarm"]},
+        {"Blast",       5 * asc["Blast"]},
+        {"Spin",        5 * asc["Spin"]},
+        {"Flame",       5 * asc["Flame"]},
+        {"Bounce",      5 * asc["Bounce"]},
+        {"2Split",      5 * asc["2Split"]},
+        {"3Split",      5 * asc["3Split"]},
+        {"4Split",      5 * asc["4Split"]},
+        {"Lightning",   5 * asc["Lightning"]},
+        {"Explode",     5 * asc["Explode"]},
+        {"Laser",       0 * asc["Laser"]}
     )
-
+    --]]
     self.resource_spawn_chances = chanceList(
         {'Boost', 28 * self.stage.player.boost_spawn_chance_multiplier}, 
         {'HP', 14 * self.stage.player.hp_spawn_chance_multiplier}, 

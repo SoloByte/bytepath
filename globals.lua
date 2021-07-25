@@ -35,7 +35,7 @@ attacks = {
     ["2Split"] = {cooldown = 0.32, ammo = 3, abbrevation = '2S', color = ammo_color},
     ["3Split"] = {cooldown = 0.5, ammo = 5, abbrevation = '3S', color = hp_color},
     ["4Split"] = {cooldown = 0.4, ammo = 4, abbrevation = '4S', color = boost_color},
-    ["Lightning"] = {cooldown = 0.2, ammo = 8, abbrevation = 'Li', color = default_color},
+    ["Lightning"] = {cooldown = 0.25, ammo = 8, abbrevation = 'Li', color = default_color},
     ["Explode"] = {cooldown = 0.6, ammo = 4, abbrevation = 'E', color = hp_color},
     ["Laser"] = {cooldown = 0.8, ammo = 0, abbrevation = 'La', color = hp_color}, --ammo = 6
 }

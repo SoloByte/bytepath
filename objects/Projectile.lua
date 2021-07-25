@@ -16,9 +16,8 @@ function Projectile:new(area, x, y, opts)
     self.collider:setObject(self)
     self.collider:setCollisionClass("Projectile")
     self.collider:setLinearVelocity(self.v * math.cos(self.r), self.v * math.sin(self.r))
-
+    self.explosion_radius = (opts.explosion_radius or 64) * self.multipliers.area_multiplier
     self.target = nil
-    self.explosion_radius = opts.explosion_radius or 100
     if self.attack == "Homing" or self.attack == "Swarm" or self.attack == "2Split" or 
         self.attack == "3Split" or self.attack == "4Split" or self.attack == "Explode" then
         self.timer:every(0.02, function ()
@@ -56,7 +55,11 @@ function Projectile:new(area, x, y, opts)
         end)
     
     elseif self.attack == "Spin" then
-        self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
+        if self.passives.fixed_spin then
+            self.rv = random(math.pi, math.pi * 2)
+        else
+            self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
+        end
         if not self.passives.shield then
             self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:die() end)
         end
@@ -240,6 +243,13 @@ end
 
 
 function Projectile:spawnSplitProjectile(rot, dis, atk)
+    local split_children
+    if (self.attack == "2Split" or self.attack == "4Split") and self.split_children then
+        atk = self.attack
+        if self.split_children:next() then
+            split_children = self.split_children
+        end
+    end
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
@@ -249,6 +259,7 @@ function Projectile:spawnSplitProjectile(rot, dis, atk)
         v = self.v,
         modulate = self.color,
         bounce = self.bounce,
+        split_children = split_children,
         multipliers = self.multipliers,
         passives = self.passives
     })
@@ -268,7 +279,7 @@ function Projectile:update(dt)
     if self.attack == "Homing" or self.attack == "Swarm" then
         --aquire target
         if not self.target then
-            self.target = self.area:getGameObjectsInCircle(self.x, self.y, 400, "enemy", "random")
+            self.target = self.area:getGameObjectsInCircle(self.x, self.y, 300, "enemy", "random")
             --[[cal targets = self.area:getAllGameObjectsThat(function (e)
                 return e.group == "enemy" and distanceSquared(e.x, e.y, self.x, self.y) < 16000
             end)
@@ -373,7 +384,7 @@ end
 function Projectile:die()
     self.dead = true
     if self.attack == "Explode" then
-        self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = 12 * self.s})
+        self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = self.explosion_radius})
         for i = 1, love.math.random(4, 8) do 
             self.area:addGameObject("ExplodeParticle", self.x, self.y, {color = self.color, s = random(5, 10), v = random(150, 200)}) 
         end

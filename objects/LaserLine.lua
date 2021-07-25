@@ -7,7 +7,7 @@ function LaserLine:new(area, x, y, opts)
     self.depth = 75
     self.r = opts.r or 0
     self.d = opts.d or 650
-    self.w = opts.w or 8
+    self.w = (opts.w or 8) * (opts.w_mp or 1)
     self.gap = self.w
     self.side_w = self.w * 0.25
     self.alpha = 1

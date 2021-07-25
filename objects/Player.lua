@@ -78,11 +78,61 @@ function Player:new(area, x, y, opts)
     self.projectile_acceleration_multiplier = 1.0
     self.projectile_deceleration_multiplier = 1.0
     self.projectile_duration_multiplier = 1.0
+    self.area_multiplier = 1.0
+    self.laser_width_multiplier = 1.0
+
+
+    self.attack_spawn_chance_multipliers = {
+        ["Neutral"]     = 1,
+        ["Double"]      = 1,
+        ["Triple"]      = 1,
+        ["Spread"]      = 1,
+        ["Rapid"]       = 1,
+        ["Back"]        = 1,
+        ["Side"]        = 1,
+        ["Homing"]      = 1,
+        ["Sniper"]      = 1,
+        ["Swarm"]       = 10,
+        ["Blast"]       = 1,
+        ["Spin"]        = 1,
+        ["Flame"]       = 1,
+        ["Bounce"]      = 1,
+        ["2Split"]      = 1,
+        ["3Split"]      = 1,
+        ["4Split"]      = 1,
+        ["Lightning"]   = 1,
+        ["Explode"]     = 1,
+        ["Laser"]       = 1 
+    }
+
+    self.start_attack_chances = {
+        ["Neutral"]     = true,
+        ["Double"]      = false,
+        ["Triple"]      = false,
+        ["Spread"]      = false,
+        ["Rapid"]       = false,
+        ["Back"]        = false,
+        ["Side"]        = false,
+        ["Homing"]      = false,
+        ["Sniper"]      = false,
+        ["Swarm"]       = false,
+        ["Blast"]       = false,
+        ["Spin"]        = false,
+        ["Flame"]       = false,
+        ["Bounce"]      = false,
+        ["2Split"]      = false,
+        ["3Split"]      = false,
+        ["4Split"]      = false,
+        ["Lightning"]   = false,
+        ["Explode"]     = false,
+        ["Laser"]       = false 
+    }
 
     --flats
     self.flat_hp = 0
     self.flat_ammo = 0
     self.flat_boost = 0
+    self.additional_bounce_projectiles = 0
     
 
     --chances
@@ -112,6 +162,7 @@ function Player:new(area, x, y, opts)
     self.launch_homing_projectile_while_boosting_chance = 0
     self.attack_twice_chance = 0
     self.gain_double_sp_chance = 0
+    self.split_projectiles_split_chance = 0 --maybe has to be changed so that split children projectiles can never spawn new split children projectiles
 
     self.spawn_double_hp_chance = 0
     self.spawn_double_sp_chance = 0
@@ -129,7 +180,9 @@ function Player:new(area, x, y, opts)
     self.projectile_wavy = false
     self.slow_to_fast = false
     self.fast_to_slow = false
-
+    self.additional_lightning_bolt = false
+    self.increased_lightning_angle = false
+    self.fixed_spin_attack_direction  = false
 
 
     self.ammo_gain = 0
@@ -150,7 +203,16 @@ function Player:new(area, x, y, opts)
         self:changeShip(ship)
     end)
 
-    self:setAttack("Neutral")
+    local start_attacks = {}
+    for key, value in pairs(self.start_attack_chances) do
+        if value then
+            table.insert(start_attacks, key)
+        end
+    end
+
+    local start_attack = table.random(start_attacks)
+
+    self:setAttack(start_attack)
 
 
     --treeToPlayer(self)
@@ -197,29 +259,50 @@ function Player:shoot()
 
     elseif self.attack == "Lightning" then
         local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
-        local cx, cy = x1 + 24 * math.cos(self.r), y1 + 24 * math.sin(self.r)
+        local cx, cy
+        if self.increased_lightning_angle then
+            cx, cy = self.x, self.y
+        else
+            cx, cy = x1 + 24 * math.cos(self.r), y1 + 24 * math.sin(self.r)
+        end
+        --local closest_enemy = self.area:getGameObjectsInCircle(cx, cy, 64, "enemy", "closest")--nearby_enemies[1]
+        local closest_enemies = self.area:getGameObjectsInCircle(cx, cy, 64 * self.area_multiplier, "enemy", "closest_all")
 
-        local closest_enemy = self.area:getGameObjectsInCircle(cx, cy, 64, "enemy", "closest")--nearby_enemies[1]
-
-        if closest_enemy then
-            self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
-            closest_enemy:hit()
-            local x2, y2 = closest_enemy.x, closest_enemy.y
-            self.area:addGameObject("LightningLine", 0, 0, {x1 = x1, y1 = y1, x2 = x2, y2 = y2})
-            for i = 1, love.math.random(4, 8) do 
-                self.area:addGameObject("ExplodeParticle", x1, y1, 
-              {color = table.random({default_color, boost_color})}) 
-            end
-            for i = 1, love.math.random(4, 8) do 
-                    self.area:addGameObject("ExplodeParticle", x2, y2, 
-                {color = table.random({default_color, boost_color})}) 
+        local function spawnLightningBolt(enemy, ammo)
+            if enemy then
+                if ammo then
+                    self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+                end
+                enemy:hit()
+                local x2, y2 = enemy.x, enemy.y
+                self.area:addGameObject("LightningLine", 0, 0, {x1 = x1, y1 = y1, x2 = x2, y2 = y2})
+                for i = 1, love.math.random(4, 8) do 
+                    self.area:addGameObject("ExplodeParticle", x1, y1, 
+                  {color = table.random({default_color, boost_color})}) 
+                end
+                for i = 1, love.math.random(4, 8) do 
+                        self.area:addGameObject("ExplodeParticle", x2, y2, 
+                    {color = table.random({default_color, boost_color})}) 
+                end
             end
         end
+
+        spawnLightningBolt(closest_enemies[1], true)
+        
+        if self.additional_lightning_bolt then
+            if closest_enemies[2] then
+                self.timer:after(attacks["Lightning"].cooldown * 0.25, function ()
+                    spawnLightningBolt(closest_enemies[2], false)
+                end)
+            end
+        end
+
+
         return -- so the other shoot code isnt run
     elseif self.attack == "Laser" then
         local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
         self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
-        self.area:addGameObject("LaserLine", x1, y1, {r = self.r, color = attacks[self.attack].color})
+        self.area:addGameObject("LaserLine", x1, y1, {r = self.r, color = attacks[self.attack].color, w_mp = self.laser_width_multiplier})
         return
     elseif self.attack == "Sniper" then
         self:spawnProjectile(self.attack, self.r, d, mods, 1.5)
@@ -756,11 +839,21 @@ end
 
 
 function Player:spawnHasteArea()
-    self.area:addGameObject("HasteArea", self.x, self.y, {dur_mp = self.stat_boost_duration_multiplier})
+    self.area:addGameObject("HasteArea", self.x, self.y, {dur_mp = self.stat_boost_duration_multiplier, area_mp = self.area_multiplier})
     self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
 end
 
 function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
+    
+    local split_children
+    if self.attack == "2Split" or self.attack == "4Split" then
+        if self.split_projectiles_split_chance > 0 then
+            if self.chances.split_projectiles_split_chance:next() then
+                split_children = self.chances.split_projectiles_split_chance
+            end
+        end
+    end
+
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
@@ -769,7 +862,8 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
         attack = atk, 
         v = 200 * (vel_mp or 1),
         modulate = attacks[atk].color,
-        bounce = mods.bounce,
+        bounce = mods.bounce + self.additional_bounce_projectiles,
+        split_children = split_children,
         multipliers = {
             speed = self.projectile_speed_mutliplier.value,
             size = self.projectile_size_mutliplier,
@@ -778,6 +872,7 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
             acceleration_multiplier = self.projectile_acceleration_multiplier,
             deceleration_multiplier = self.projectile_deceleration_multiplier,
             duration_multiplier = self.projectile_duration_multiplier,
+            area_multiplier = self.area_multiplier
         },
 
         passives = {
@@ -786,7 +881,8 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
             wavy = self.projectile_wavy,
             slow_to_fast = self.slow_to_fast,
             fast_to_slow = self.fast_to_slow,
-            shield = mods.shield or false
+            shield = mods.shield or false,
+            fixed_spin = self.fixed_spin_attack_direction
         }
     })
 end

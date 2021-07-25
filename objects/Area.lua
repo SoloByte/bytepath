@@ -83,7 +83,17 @@ function Area:getGameObjectsInCircle(x, y, r, group, filter)
         table.sort(targets, function (a, b)
             return distanceSquared(a.x, a.y, x, y) > distanceSquared(b.x, b.y, x, y)
         end)
-        return targets[#targets]
+        return targets[1]
+    elseif f == "closest_all" then
+        table.sort(targets, function (a, b)
+            return distanceSquared(a.x, a.y, x, y) < distanceSquared(b.x, b.y, x, y)
+        end)
+        return targets
+    elseif f == "furthest_all" then
+        table.sort(targets, function (a, b)
+            return distanceSquared(a.x, a.y, x, y) > distanceSquared(b.x, b.y, x, y)
+        end)
+        return targets
     end
 end
 
