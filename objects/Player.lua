@@ -39,6 +39,20 @@ function Player:new(area, x, y, opts)
 
     self.inside_haste_area = false
 
+
+    local function generateAttackTable(v)
+        local t = {}
+        for _, value in pairs(attacks) do
+            t[value.name] = v
+        end
+        return t
+    end
+
+    self.attack_spawn_chance_multipliers = generateAttackTable(1)
+    self.start_attack_chances = generateAttackTable(false)
+    self.start_attack_chances["Neutral"] = true
+
+
     --multipliers
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
@@ -81,7 +95,9 @@ function Player:new(area, x, y, opts)
     self.area_multiplier = 1.0
     self.laser_width_multiplier = 1.0
 
-
+    
+    
+    --[[
     self.attack_spawn_chance_multipliers = {
         ["Neutral"]     = 1,
         ["Double"]      = 1,
@@ -92,7 +108,7 @@ function Player:new(area, x, y, opts)
         ["Side"]        = 1,
         ["Homing"]      = 1,
         ["Sniper"]      = 1,
-        ["Swarm"]       = 10,
+        ["Swarm"]       = 1,
         ["Blast"]       = 1,
         ["Spin"]        = 1,
         ["Flame"]       = 1,
@@ -127,6 +143,7 @@ function Player:new(area, x, y, opts)
         ["Explode"]     = false,
         ["Laser"]       = false 
     }
+--]]
 
     --flats
     self.flat_hp = 0
@@ -194,6 +211,29 @@ function Player:new(area, x, y, opts)
     self.boosting = false
     self.trail_color = skill_point_color
     
+
+    self.projectile_multipliers = {
+        speed = self.projectile_speed_mutliplier.value,
+        size = self.projectile_size_mutliplier,
+        angle_change_frequency = self.angle_change_frequency_multiplier,
+        wavy_amplitude = self.projectile_waviness_multiplier,
+        acceleration_multiplier = self.projectile_acceleration_multiplier,
+        deceleration_multiplier = self.projectile_deceleration_multiplier,
+        duration_multiplier = self.projectile_duration_multiplier,
+        area_multiplier = self.area_multiplier
+    }
+
+    self.projectile_passives = {
+        degree_change_90 = self.projectile_90_degree_change,
+        random_degree_change = self.projectile_random_degree_change,
+        wavy = self.projectile_wavy,
+        slow_to_fast = self.slow_to_fast,
+        fast_to_slow = self.fast_to_slow,
+        fixed_spin = self.fixed_spin_attack_direction
+    }
+
+
+
     self:changeShip(self.ship)
 
     input:bind("f3", function () self:die() end)
@@ -864,26 +904,9 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
         modulate = attacks[atk].color,
         bounce = mods.bounce + self.additional_bounce_projectiles,
         split_children = split_children,
-        multipliers = {
-            speed = self.projectile_speed_mutliplier.value,
-            size = self.projectile_size_mutliplier,
-            angle_change_frequency = self.angle_change_frequency_multiplier,
-            wavy_amplitude = self.projectile_waviness_multiplier,
-            acceleration_multiplier = self.projectile_acceleration_multiplier,
-            deceleration_multiplier = self.projectile_deceleration_multiplier,
-            duration_multiplier = self.projectile_duration_multiplier,
-            area_multiplier = self.area_multiplier
-        },
-
-        passives = {
-            degree_change_90 = self.projectile_90_degree_change,
-            random_degree_change = self.projectile_random_degree_change,
-            wavy = self.projectile_wavy,
-            slow_to_fast = self.slow_to_fast,
-            fast_to_slow = self.fast_to_slow,
-            shield = mods.shield or false,
-            fixed_spin = self.fixed_spin_attack_direction
-        }
+        shield = mods.shield or false,
+        multipliers = self.projectile_multipliers,
+        passives = self.projectile_passives,
     })
 end
 

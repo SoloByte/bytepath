@@ -18,26 +18,26 @@ all_colors = fn.append(default_colors, negative_colors)
 
 
 attacks = {
-    ["Neutral"] = {cooldown = 0.24, ammo = 0, abbrevation = "N", color = default_color},
-    ["Double"] = {cooldown = 0.32, ammo = 2, abbrevation = "2", color = ammo_color},
-    ["Triple"] = {cooldown = 0.32, ammo = 3, abbrevation = "3", color = boost_color},
-    ["Spread"] = {cooldown = 0.16, ammo = 2, abbrevation = "RS", color = default_color},
-    ["Rapid"] = {cooldown = 0.12, ammo = 1, abbrevation = "R", color = default_color},
-    ["Back"] = {cooldown = 0.32, ammo = 2, abbrevation = "Ba", color = skill_point_color},
-    ["Side"] = {cooldown = 0.32, ammo = 2, abbrevation = "Si", color = boost_color},
-    ["Homing"] = {cooldown = 0.56, ammo = 4, abbrevation = 'H', color = skill_point_color},
-    ["Sniper"] = {cooldown = 0.5, ammo = 3, abbrevation = 'Sn', color = boost_color},
-    ["Swarm"] = {cooldown = 2.5, ammo = 15, abbrevation = 'Sw', color = skill_point_color},
-    ["Blast"] = {cooldown = 0.64, ammo = 6, abbrevation = 'W', color = default_color},
-    ["Spin"] = {cooldown = 0.32, ammo = 2, abbrevation = 'Sp', color = hp_color},
-    ["Flame"] = {cooldown = 0.048, ammo = 0.4, abbrevation = 'F', color = skill_point_color},
-    ["Bounce"] = {cooldown = 0.32, ammo = 4, abbrevation = 'Bn', color = default_color},
-    ["2Split"] = {cooldown = 0.32, ammo = 3, abbrevation = '2S', color = ammo_color},
-    ["3Split"] = {cooldown = 0.5, ammo = 5, abbrevation = '3S', color = hp_color},
-    ["4Split"] = {cooldown = 0.4, ammo = 4, abbrevation = '4S', color = boost_color},
-    ["Lightning"] = {cooldown = 0.25, ammo = 8, abbrevation = 'Li', color = default_color},
-    ["Explode"] = {cooldown = 0.6, ammo = 4, abbrevation = 'E', color = hp_color},
-    ["Laser"] = {cooldown = 0.8, ammo = 0, abbrevation = 'La', color = hp_color}, --ammo = 6
+    ["Neutral"] = {cooldown = 0.24, ammo = 0, abbrevation = "N", color = default_color, name = "Neutral"},
+    ["Double"] = {cooldown = 0.32, ammo = 2, abbrevation = "2", color = ammo_color, name = "Double"},
+    ["Triple"] = {cooldown = 0.32, ammo = 3, abbrevation = "3", color = boost_color, name = "Triple"},
+    ["Spread"] = {cooldown = 0.16, ammo = 2, abbrevation = "RS", color = default_color, name = "Spread"},
+    ["Rapid"] = {cooldown = 0.12, ammo = 1, abbrevation = "R", color = default_color, name = "Rapid"},
+    ["Back"] = {cooldown = 0.32, ammo = 2, abbrevation = "Ba", color = skill_point_color, name = "Back"},
+    ["Side"] = {cooldown = 0.32, ammo = 2, abbrevation = "Si", color = boost_color, name = "Side"},
+    ["Homing"] = {cooldown = 0.56, ammo = 4, abbrevation = 'H', color = skill_point_color, name = "Homing"},
+    ["Sniper"] = {cooldown = 0.5, ammo = 3, abbrevation = 'Sn', color = boost_color, name = "Sniper"},
+    ["Swarm"] = {cooldown = 2.5, ammo = 15, abbrevation = 'Sw', color = skill_point_color, name = "Swarm"},
+    ["Blast"] = {cooldown = 0.64, ammo = 6, abbrevation = 'W', color = default_color, name = "Blast"},
+    ["Spin"] = {cooldown = 0.32, ammo = 2, abbrevation = 'Sp', color = hp_color, name = "Spin"},
+    ["Flame"] = {cooldown = 0.048, ammo = 0.4, abbrevation = 'F', color = skill_point_color, name = "Flame"},
+    ["Bounce"] = {cooldown = 0.32, ammo = 4, abbrevation = 'Bn', color = default_color, name = "Bounce"},
+    ["2Split"] = {cooldown = 0.32, ammo = 3, abbrevation = '2S', color = ammo_color, name = "2Split"},
+    ["3Split"] = {cooldown = 0.5, ammo = 5, abbrevation = '3S', color = hp_color, name = "3Split"},
+    ["4Split"] = {cooldown = 0.4, ammo = 4, abbrevation = '4S', color = boost_color, name = "4Split"},
+    ["Lightning"] = {cooldown = 0.25, ammo = 8, abbrevation = 'Li', color = default_color, name = "Lightning"},
+    ["Explode"] = {cooldown = 0.6, ammo = 4, abbrevation = 'E', color = hp_color, name = "Explode"},
+    ["Laser"] = {cooldown = 0.8, ammo = 0, abbrevation = 'La', color = hp_color, name = "Laser"}, --ammo = 6
 }
 
 

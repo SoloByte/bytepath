@@ -32,14 +32,14 @@ function Projectile:new(area, x, y, opts)
     elseif self.attack == "Blast" then
         self.damage = 75
         self.color = table.random(negative_colors)
-        if not self.passives.shield then
+        if not self.shield then
             self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
         end
 
     elseif self.attack == "Flame" then
         self.damage = 50
         --self.color = table.random(negative_colors)
-        if not self.passives.shield then
+        if not self.shield then
             self.timer:tween(random(0.6, 1) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
         end
         self.timer:every(0.05, function ()
@@ -60,7 +60,7 @@ function Projectile:new(area, x, y, opts)
         else
             self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
         end
-        if not self.passives.shield then
+        if not self.shield then
             self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:die() end)
         end
         self.timer:every(0.05, function ()
@@ -118,7 +118,7 @@ function Projectile:new(area, x, y, opts)
             self.timer:tween("fast_slow_second", 0.3, self, {v = initial_v / (2 * self.multipliers.deceleration_multiplier)}, "in-out-cubic")
         end)
 
-    elseif self.passives.shield then
+    elseif self.shield then
         self.orbit_distance = random(32, 64)
         self.orbit_speed = random(-6, 6)
         self.orbit_offset = random(0, 2 * math.pi)
@@ -305,7 +305,7 @@ function Projectile:update(dt)
     end
 
 
-    if self.passives.shield then
+    if self.shield then
         local player = current_room.player
         if player then
             self.collider:setPosition(

@@ -43,15 +43,18 @@ function Director:new(stage)
         )
     end
     
-    local asc = stage.player.attack_spawn_chance_multipliers
-    --[[
-    local chance_list = {}
-    for key, value in pairs(asc) do
-        table.insert(chance_list, {[key] = 5 * value})
+    
+    local function generateAttackChances()
+        local asc = stage.player.attack_spawn_chance_multipliers
+        local t = {}
+        for _, value in pairs(attacks) do
+            table.insert(t, {value.name, 5 * asc[value.name]})
+        end
+        return chanceList(unpack(t))
     end
-    self.attack_spawn_chances = chanceListTable(chance_list)
-    --]]
-    ---[[
+    self.attack_spawn_chances = generateAttackChances()
+
+    --[[
     self.attack_spawn_chances = chanceList(
         --{"Neutral", 0},
         {"Double",      5 * asc["Double"]},
@@ -75,6 +78,7 @@ function Director:new(stage)
         {"Laser",       0 * asc["Laser"]}
     )
     --]]
+    
     self.resource_spawn_chances = chanceList(
         {'Boost', 28 * self.stage.player.boost_spawn_chance_multiplier}, 
         {'HP', 14 * self.stage.player.hp_spawn_chance_multiplier}, 
