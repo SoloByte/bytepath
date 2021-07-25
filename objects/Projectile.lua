@@ -33,14 +33,14 @@ function Projectile:new(area, x, y, opts)
         self.damage = 75
         self.color = table.random(negative_colors)
         if not self.shield then
-            self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
+            self.timer:tween(random(0.4, 0.6) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:expire() end)
         end
 
     elseif self.attack == "Flame" then
         self.damage = 50
         --self.color = table.random(negative_colors)
         if not self.shield then
-            self.timer:tween(random(0.6, 1) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:die() end)
+            self.timer:tween(random(0.6, 1) * self.multipliers.duration_multiplier, self, {v = 0}, "linear", function() self:expire() end)
         end
         self.timer:every(0.05, function ()
             self.area:addGameObject(
@@ -61,7 +61,7 @@ function Projectile:new(area, x, y, opts)
             self.rv = table.random({random(-2*math.pi, -math.pi), random(math.pi, math.pi * 2)})
         end
         if not self.shield then
-            self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:die() end)
+            self.timer:after(random(2.4, 3.2) * self.multipliers.duration_multiplier, function () self:expire() end)
         end
         self.timer:every(0.05, function ()
             self.area:addGameObject(
@@ -125,7 +125,11 @@ function Projectile:new(area, x, y, opts)
 
         self.invisible = true
         self.timer:after(0.05, function () self.invisible = false end)
-        self.timer:after(6  * self.multipliers.duration_multiplier, function () self:die() end)
+        self.timer:after(6  * self.multipliers.duration_multiplier, function () self:expire() end)
+    
+    elseif self.mine then
+        self.rv = table.random({random(-12*math.pi, -10 * math.pi), random(10 * math.pi, math.pi * 12)})
+        self.timer:after(random(8, 10), function() self:expire() end)
     end
 
 
@@ -272,7 +276,7 @@ function Projectile:update(dt)
         self:die()
     end
     
-    if self.attack == "Spin" then
+    if self.attack == "Spin" or self.mine then
         self.r = self.r + self.rv * dt
     end
 
@@ -381,9 +385,18 @@ function Projectile:destroy()
     Projectile.super.destroy(self)
 end
 
-function Projectile:die()
-    self.dead = true
-    if self.attack == "Explode" then
+function Projectile:explode()
+    if self.passives.barrage_explosion then
+        local barrage_count = 5 + (self.barrage_count or 0)
+        local start_angle = self.r
+        local angle_step = (math.pi * 2) / barrage_count
+        local current_angle = start_angle
+        local d = self.s
+        for i = 1, barrage_count do
+            self:spawnSplitProjectile(current_angle, d, "Neutral")
+            current_angle = current_angle + angle_step
+        end
+    else
         self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = self.explosion_radius})
         for i = 1, love.math.random(4, 8) do 
             self.area:addGameObject("ExplodeParticle", self.x, self.y, {color = self.color, s = random(5, 10), v = random(150, 200)}) 
@@ -393,6 +406,22 @@ function Projectile:die()
             local target = targets[i]
             target:hit()
         end
+    end
+   
+end
+
+
+function Projectile:expire()
+    if self.passives.explode_on_expiration then
+        self:explode()
+    end
+    self:die()
+end
+
+function Projectile:die()
+    self.dead = true
+    if self.attack == "Explode" or self.mine then
+        self:explode()
     else
         self.area:addGameObject("ProjectileDeathEffect", self.x, self.y, {color = hp_color, w = 3 * self.s})
     end

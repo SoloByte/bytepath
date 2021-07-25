@@ -36,7 +36,6 @@ function Player:new(area, x, y, opts)
     self.cycle_timer = 0
     self.cycle_cooldown = 5
 
-
     self.inside_haste_area = false
 
 
@@ -49,6 +48,8 @@ function Player:new(area, x, y, opts)
     end
 
     self.attack_spawn_chance_multipliers = generateAttackTable(1)
+    self.attack_spawn_chance_multipliers["Laser"] = 0
+
     self.start_attack_chances = generateAttackTable(false)
     self.start_attack_chances["Neutral"] = true
 
@@ -95,61 +96,13 @@ function Player:new(area, x, y, opts)
     self.area_multiplier = 1.0
     self.laser_width_multiplier = 1.0
 
-    
-    
-    --[[
-    self.attack_spawn_chance_multipliers = {
-        ["Neutral"]     = 1,
-        ["Double"]      = 1,
-        ["Triple"]      = 1,
-        ["Spread"]      = 1,
-        ["Rapid"]       = 1,
-        ["Back"]        = 1,
-        ["Side"]        = 1,
-        ["Homing"]      = 1,
-        ["Sniper"]      = 1,
-        ["Swarm"]       = 1,
-        ["Blast"]       = 1,
-        ["Spin"]        = 1,
-        ["Flame"]       = 1,
-        ["Bounce"]      = 1,
-        ["2Split"]      = 1,
-        ["3Split"]      = 1,
-        ["4Split"]      = 1,
-        ["Lightning"]   = 1,
-        ["Explode"]     = 1,
-        ["Laser"]       = 1 
-    }
-
-    self.start_attack_chances = {
-        ["Neutral"]     = true,
-        ["Double"]      = false,
-        ["Triple"]      = false,
-        ["Spread"]      = false,
-        ["Rapid"]       = false,
-        ["Back"]        = false,
-        ["Side"]        = false,
-        ["Homing"]      = false,
-        ["Sniper"]      = false,
-        ["Swarm"]       = false,
-        ["Blast"]       = false,
-        ["Spin"]        = false,
-        ["Flame"]       = false,
-        ["Bounce"]      = false,
-        ["2Split"]      = false,
-        ["3Split"]      = false,
-        ["4Split"]      = false,
-        ["Lightning"]   = false,
-        ["Explode"]     = false,
-        ["Laser"]       = false 
-    }
---]]
-
     --flats
     self.flat_hp = 0
     self.flat_ammo = 0
     self.flat_boost = 0
     self.additional_bounce_projectiles = 0
+    self.additional_homing_projectiles = 0
+    self.additional_barrage_projectiles = 0
     
 
     --chances
@@ -180,12 +133,14 @@ function Player:new(area, x, y, opts)
     self.attack_twice_chance = 0
     self.gain_double_sp_chance = 0
     self.split_projectiles_split_chance = 0 --maybe has to be changed so that split children projectiles can never spawn new split children projectiles
+    self.self_explode_on_cycle_chance = 0
 
     self.spawn_double_hp_chance = 0
     self.spawn_double_sp_chance = 0
     self.drop_double_ammo_chance = 0
 
     self.shield_projectile_chance = 0
+    self.drop_mines_chance  = 0
 
     self.increased_luck_while_boosting = false
     self.luck_boosting = false
@@ -200,6 +155,9 @@ function Player:new(area, x, y, opts)
     self.additional_lightning_bolt = false
     self.increased_lightning_angle = false
     self.fixed_spin_attack_direction  = false
+    self.barrage_nova = false
+    self.projectiles_explode_on_expiration = false
+    self.projectiles_explosions = false
 
 
     self.ammo_gain = 0
@@ -229,10 +187,14 @@ function Player:new(area, x, y, opts)
         wavy = self.projectile_wavy,
         slow_to_fast = self.slow_to_fast,
         fast_to_slow = self.fast_to_slow,
-        fixed_spin = self.fixed_spin_attack_direction
+        fixed_spin = self.fixed_spin_attack_direction,
+        explode_on_expiration = self.projectiles_explode_on_expiration,
+        barrage_explosion = self.projectiles_explosions
     }
 
-
+    self.drop_mine_interval = 0.5
+    self.drop_mine_timer = 0
+    if self.drop_mines_chance > 0 then self.drop_mine_timer = self.drop_mine_interval end
 
     self:changeShip(self.ship)
 
@@ -253,7 +215,7 @@ function Player:new(area, x, y, opts)
     local start_attack = table.random(start_attacks)
 
     self:setAttack(start_attack)
-
+    --self:setAttack("Explode")
 
     --treeToPlayer(self)
     self:setStats()
@@ -536,6 +498,25 @@ function Player:update(dt)
         end
     end
 
+    if self.drop_mine_timer > 0 then
+        self.drop_mine_timer = self.drop_mine_timer - dt
+        if self.drop_mine_timer <= 0 then
+            self.drop_mine_timer = self.drop_mine_interval
+            if self.chances.drop_mines_chance:next() then
+                local d = -self.w * 1.5
+
+                self.area:addGameObject("ShootEffect", 
+                self.x, 
+                self.y, 
+                {player = self, d = d})
+                
+                self:spawnProjectile(self.attack, self.r, d, {mine = true})
+                self.area:addGameObject('InfoText', self.x, self.y, {text = 'Drop Mine!', color = ammo_color})
+            end
+        end
+    end
+
+
     if self.increased_cycle_speed_while_boosting then self.cycle_speed_multiplayer:increase(100) end
     self.cycle_timer = self.cycle_timer + dt
     if self.cycle_timer >= self.cycle_cooldown/self.cycle_speed_multiplayer.value then
@@ -644,10 +625,7 @@ end
 function Player:onBoostStart()
     self.timer:every("boost_chances", 0.2, function ()
         if self.chances.launch_homing_projectile_while_boosting_chance:next() then
-            local d = self.w * 1.2
-            d = d * 1.5 
-            self:spawnProjectile("Homing", self.r, d)
-            self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+            self:spawnHomingProjectile()
         end
     end)
 
@@ -721,20 +699,7 @@ end
 
 function Player:onKill()
     if self.chances.barrage_on_kill_chance:next() then
-        local d = self.w * 1.2
-
-        self.area:addGameObject("ShootEffect", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {player = self, d = d})
-
-        d = d * 1.5
-        self.timer:every("barrage", 0.05, function ()
-            local angle = self.r + random(-math.pi/8, math.pi/8)
-            self:spawnProjectile(self.attack, angle, d)
-        end, 8)
-
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
+        self:spawnBarrage()
     end
 
     if self.chances.regain_ammo_on_kill_chance:next() then
@@ -744,10 +709,7 @@ function Player:onKill()
 
     
     if self.chances.launch_homing_projectile_on_kill_chance:next() then
-        local d = self.w * 1.2
-        d = d * 1.5 
-        self:spawnProjectile("Homing", self.r, d)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+        self:spawnHomingProjectile()
     end
 
     if self.chances.regain_boost_on_kill_chance:next() then
@@ -798,27 +760,11 @@ function Player:onCycle()
     end
 
     if self.chances.barrage_on_cycle_chance:next() then
-        local d = self.w * 1.2
-
-        self.area:addGameObject("ShootEffect", 
-        self.x + d * math.cos(self.r), 
-        self.y + d * math.sin(self.r), 
-        {player = self, d = d})
-
-        d = d * 1.5
-        self.timer:every("barrage", 0.05, function ()
-            local angle = self.r + random(-math.pi/8, math.pi/8)
-            self:spawnProjectile(self.attack, angle, d)
-        end, 8)
-
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
+        self:spawnBarrage()
     end
 
     if self.chances.launch_homing_projectile_on_cycle_chance:next() then
-        local d = self.w * 1.2
-        d = d * 1.5 
-        self:spawnProjectile("Homing", self.r + math.pi * 0.5, d)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+        self:spawnHomingProjectile()
     end
 
     if self.chances.gain_movement_speed_boost_on_cycle_chance:next() then
@@ -844,14 +790,30 @@ function Player:onCycle()
         end)
         self.area:addGameObject('InfoText', self.x, self.y, {text = 'PSPD Slow!', color = skill_point_color})
     end
+
+    if self.chances.self_explode_on_cycle_chance:next() then
+        local color = table.random(all_colors)
+        local size = self.w * 6
+        self:createExplosion(self.x, self.y, size, color)
+        self.timer:after(0.2, function ()
+            local explosion_count = 6
+            local distance = size
+            local angle_step = (math.pi * 2) / explosion_count
+            local start_angle = self.r
+            local current_angle = start_angle
+            
+            for i = 1, explosion_count do
+                local x,y = self.x + distance * math.cos(current_angle), self.y + distance * math.sin(current_angle)
+                self:createExplosion(x,y, size * 0.5, color)
+                current_angle = current_angle + angle_step
+            end
+        end)
+    end
 end
 
 function Player:onAmmoPickup()
     if self.chances.launch_homing_projectile_on_ammo_pickup_chance:next() then
-        local d = self.w * 1.2
-        d = d * 1.5 
-        self:spawnProjectile("Homing", self.r, d)
-        self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+        self:spawnHomingProjectile()
     end
 
     if self.chances.regain_hp_on_ammo_pickup_chance:next() then
@@ -878,6 +840,18 @@ function Player:onHPPickup()
 end
 
 
+function Player:createExplosion(x, y, size, color)
+    self.area:addGameObject("ProjectileDeathEffect", x, y, {color = color, w = size})
+    for i = 1, love.math.random(4, 8) do 
+        self.area:addGameObject("ExplodeParticle", x, y, {color = color, s = random(5, 10), v = random(150, 200)}) 
+    end
+    local targets = self.area:getGameObjectsInCircle(x, y, size, "enemy", "all")
+    for i = 1, #targets do
+        local target = targets[i]
+        target:hit()
+    end
+end
+
 function Player:spawnHasteArea()
     self.area:addGameObject("HasteArea", self.x, self.y, {dur_mp = self.stat_boost_duration_multiplier, area_mp = self.area_multiplier})
     self.area:addGameObject('InfoText', self.x, self.y, {text = 'Haste Area!', color = ammo_color})
@@ -893,7 +867,10 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
             end
         end
     end
-
+    
+    local bounce = mods.bounce or 0
+    if bounce > 0 then bounce = bounce + self.additional_bounce_projectiles end
+    
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
@@ -902,13 +879,66 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
         attack = atk, 
         v = 200 * (vel_mp or 1),
         modulate = attacks[atk].color,
-        bounce = mods.bounce + self.additional_bounce_projectiles,
+        bounce = bounce,
         split_children = split_children,
         shield = mods.shield or false,
+        mine = mods.mine or false,
+        barrage_count = self.additional_barrage_projectiles,
         multipliers = self.projectile_multipliers,
         passives = self.projectile_passives,
     })
 end
+
+function Player:spawnHomingProjectile()
+    local mods = {
+        shield = self.chances.shield_projectile_chance:next(),
+        bounce = 0
+    }
+    local d = self.w * 1.8
+    for i = 1, 1 + self.additional_homing_projectiles do
+        self:spawnProjectile("Homing", self.r, d, mods)
+    end
+    self.area:addGameObject('InfoText', self.x, self.y, {text = 'Homing Projectile!'})
+end
+
+function Player:spawnBarrage()
+    local mods = {
+        shield = self.chances.shield_projectile_chance:next(),
+        bounce = 0
+    }
+    local d = self.w * 1.8
+    
+    if self.barrage_nova then
+        local barrage_count = 8 + self.additional_barrage_projectiles
+        local start_angle = self.r
+        local angle_step = (math.pi * 2) / barrage_count
+        local current_angle = start_angle
+        for i = 1, barrage_count do
+            self.area:addGameObject("ShootEffect", 
+            self.x + d * math.cos(current_angle), 
+            self.y + d * math.sin(current_angle), 
+            {player = self, d = d})
+
+            self:spawnProjectile(self.attack, current_angle, d, mods)
+            current_angle = current_angle + angle_step
+        end
+    else
+        self.area:addGameObject("ShootEffect", 
+        self.x + d * math.cos(self.r), 
+        self.y + d * math.sin(self.r), 
+        {player = self, d = d})
+
+        self.timer:every("barrage", 0.05, function ()
+            local angle = self.r + random(-math.pi/8, math.pi/8)
+            self:spawnProjectile(self.attack, angle, d, mods)
+        end, 8 + self.additional_barrage_projectiles)
+    end
+    
+    self.area:addGameObject('InfoText', self.x, self.y, {text = 'Barrage!', color = ammo_color})
+end
+
+
+
 
 function Player:changeShip(new_ship)
     self.ship = new_ship
