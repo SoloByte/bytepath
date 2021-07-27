@@ -49,5 +49,6 @@ SCORE_POINTS = {
     ATTACK = 500,
     ROCK = 100,
     SHOOTER = 150,
-    BIGROCK = 125
+    BIGROCK = 125,
+    WAVER = 175,
 }
