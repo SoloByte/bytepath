@@ -54,10 +54,14 @@ function Director:new(stage)
     end
     self.attack_spawn_chances = generateAttackChances()
 
+    local resource_spawn_factor_only_boost = 1
+    if self.stage.player.only_spawn_boost then
+        resource_spawn_factor_only_boost = 0
+    end
     self.resource_spawn_chances = chanceList(
         {'Boost', 28 * self.stage.player.boost_spawn_chance_multiplier}, 
-        {'HP', 14 * self.stage.player.hp_spawn_chance_multiplier}, 
-        {'Skillpoint', 58 * self.stage.player.sp_spawn_chance_multiplier})
+        {'HP', 14 * self.stage.player.hp_spawn_chance_multiplier * resource_spawn_factor_only_boost}, 
+        {'Skillpoint', 58 * self.stage.player.sp_spawn_chance_multiplier * resource_spawn_factor_only_boost})
 
     self:setEnemySpawnsForThisRound()
     
@@ -91,20 +95,24 @@ function Director:update(dt)
         self.resource_timer = self.resource_timer - dt * resource_multiplier
         if self.resource_timer <= 0 then
             self.resource_timer = self.resource_duration
-            local resource = self.resource_spawn_chances:next()
-            self.stage.area:addGameObject(resource)
-            
-            
+
             if self.stage.player then
-                if resource == "HP" then
-                    if self.stage.player.chances.spawn_double_hp_chance:next() then
-                        self.stage.area:addGameObject("HP")
-                        self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Spawn!', color = hp_color})
-                    end
-                elseif resource == "Skillpoint" then
-                    if self.stage.player.chances.spawn_double_sp_chance:next() then
-                        self.stage.area:addGameObject("Skillpoint")
-                        self.area:addGameObject('InfoText', self.x, self.y, {text = 'SP Spawn!', color = skill_point_color})
+                if self.stage.player.only_spawn_attack then
+                    local next_attack = self.attack_spawn_chances:next()
+                    self.stage.area:addGameObject("Attack", 0, 0, {attack = next_attack})
+                else
+                    local resource = self.resource_spawn_chances:next()
+                    self.stage.area:addGameObject(resource)
+                    if resource == "HP" then
+                        if self.stage.player.chances.spawn_double_hp_chance:next() then
+                            self.stage.area:addGameObject("HP")
+                            self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Spawn!', color = hp_color})
+                        end
+                    elseif resource == "Skillpoint" then
+                        if self.stage.player.chances.spawn_double_sp_chance:next() then
+                            self.stage.area:addGameObject("Skillpoint")
+                            self.area:addGameObject('InfoText', self.x, self.y, {text = 'SP Spawn!', color = skill_point_color})
+                        end
                     end
                 end
             end

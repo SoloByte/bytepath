@@ -44,6 +44,9 @@ function Player:new(area, x, y, opts)
     self.drop_mine_interval = 0.5
     self.drop_mine_timer = 0
 
+    self.cycle_attack_interval = 10
+    self.cycle_attack_timer = 0
+
     --multipliers
     self.hp_multiplier = 1
     self.ammo_multiplier = 1
@@ -141,6 +144,19 @@ function Player:new(area, x, y, opts)
     self.luck_boosting = false
     self.invulnerability_while_boosting = false
     self.energy_shield = false
+    self.change_attack_periodically = false
+    self.gain_sp_on_death = false
+    self.convert_hp_to_sp_if_hp_full = false
+    self.no_boost = false
+    self.half_ammo = false
+    self.half_hp = false
+    self.deals_damage_while_invulnerable = false
+    self.refill_ammo_if_hp_full = false
+    self.refill_boost_if_hp_full = false
+    self.only_spawn_boost = false
+    self.only_spawn_attack = false
+    self.no_ammo_drop = true
+    self.infinite_ammo = true
 
     --projectile passives
     self.projectile_90_degree_change = false
@@ -157,6 +173,10 @@ function Player:new(area, x, y, opts)
 
     --conversions
     self.ammo_to_attack_speed = 0
+    self.movespeed_to_attack_speed = 0
+    self.movespeed_to_hp = 0
+    self.movespeed_to_projectile_speed = 0
+
 
     self.ammo_gain = 0
 
@@ -191,6 +211,13 @@ function Player:new(area, x, y, opts)
     self.start_attack_chances = generateAttackTable(false)
     self.start_attack_chances["Neutral"] = true
 
+    self.possible_attacks = {}
+    for key, value in pairs(self.attack_spawn_chance_multipliers) do
+        if value > 0 then
+            table.insert(self.possible_attacks, key)
+        end
+    end
+
     local start_attacks = {}
     for key, value in pairs(self.start_attack_chances) do
         if value then
@@ -199,9 +226,6 @@ function Player:new(area, x, y, opts)
     end
 
     local start_attack = table.random(start_attacks)
-
-    self:setAttack(start_attack)
-    --self:setAttack("Explode")
 
 
     --APPLY ALL STATS
@@ -231,6 +255,10 @@ function Player:new(area, x, y, opts)
         explode_on_expiration = self.projectiles_explode_on_expiration,
         barrage_explosion = self.projectiles_explosions
     }
+
+
+    self:setAttack(start_attack)
+    --self:setAttack("Explode")
 end
 
 function Player:setStats()
@@ -252,6 +280,21 @@ function Player:setStats()
     end
 
     if self.drop_mines_chance > 0 then self.drop_mine_timer = self.drop_mine_interval end
+    if self.change_attack_periodically then self.cycle_attack_timer = self.cycle_attack_interval end
+
+    if self.half_ammo then
+        self.max_ammo = self.max_ammo * 0.5
+    end
+
+    if self.half_hp then
+        self.max_hp = self.max_hp * 0.5
+        self.hp = self.max_hp
+    end
+
+    if self.no_boost then
+        self.max_boost = 0
+        self.boost = self.max_boost
+    end
 end
 
 function Player:generateChances()
@@ -298,7 +341,9 @@ function Player:shoot()
         local function spawnLightningBolt(enemy, ammo)
             if enemy then
                 if ammo then
-                    self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+                    if not self.infinite_ammo then
+                        self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+                    end
                 end
                 enemy:hit()
                 local x2, y2 = enemy.x, enemy.y
@@ -328,7 +373,6 @@ function Player:shoot()
         return -- so the other shoot code isnt run
     elseif self.attack == "Laser" then
         local x1, y1 = self.x + d * math.cos(self.r), self.y + d * math.sin(self.r)
-        self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
         self.area:addGameObject("LaserLine", x1, y1, {r = self.r, color = attacks[self.attack].color, w_mp = self.laser_width_multiplier})
         return
     elseif self.attack == "Sniper" then
@@ -409,10 +453,22 @@ function Player:shoot()
     self.y + d * math.sin(self.r), 
     {player = self, d = d})
 
-    self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+    if not self.infinite_ammo then
+        self:addAmmo(-attacks[self.attack].ammo * self.ammo_consumption_multiplier)
+    end
 end
 
-        
+function Player:hasFullHealth()
+    return self.hp >= self.max_hp
+end
+
+function Player:hasFullAmmo()
+    return self.ammo >= self.max_ammo
+end
+
+function Player:hasFullBoost()
+    return self.boost >= self.max_boost
+end
 
 function Player:cycle()
     self.area:addGameObject("TickEffect", self.x, self.y, {parent = self})
@@ -441,8 +497,13 @@ function Player:addHP(amount)
     end
 end
 
-function Player:hit(damage, pos_x, pos_y)
-    if self.invincible then return end
+function Player:hit(damage, pos_x, pos_y, other)
+    if self.invincible then
+        if self.deals_damage_while_invulnerable then
+            other:hit(100)
+        end
+        return 
+    end
     local dmg = damage or 10
     local x = pos_x or self.x
     local y = pos_y or self.y
@@ -488,6 +549,9 @@ end
 function Player:update(dt)
     Player.super.update(self, dt)
 
+    if self.movespeed_to_hp > 0 then
+        self.max_hp = self.max_hp + (self.movespeed_to_hp / 100) * (self.base_max_vel - self.max_vel)
+    end
 
     if self.collider:enter("Collectable") then
         local col_info = self.collider:getEnterCollisionData("Collectable")
@@ -503,6 +567,19 @@ function Player:update(dt)
             current_room:increaseScore(SCORE_POINTS.BOOST)
         elseif object:is(HP) then
             object:die()
+            if self:hasFullHealth() then
+                if self.convert_hp_to_sp_if_hp_full then
+                    SP = SP + 3
+                    self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Full +3 SP', color = skill_point_color})
+                elseif self.refill_ammo_if_hp_full then
+                    self:addAmmo(self.max_ammo)
+                    self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Full Ammo Refill', color = ammo_color})
+                elseif self.refill_boost_if_hp_full then
+                    self:addBoost(self.max_boost)
+                    self.area:addGameObject('InfoText', self.x, self.y, {text = 'HP Full Boost Refill', color = boost_color})
+                end
+            end
+           
             self:addHP(25)
             self:onHPPickup()
             current_room:increaseScore(SCORE_POINTS.HP)
@@ -526,9 +603,9 @@ function Player:update(dt)
             local object = col_info.collider:getObject()
             if object then
                 if object:is(Rock) then
-                    self:hit(30)
+                    self:hit(30, self.x, self.y, object)
                 elseif object:is(Shooter) then
-                    self:hit(20)
+                    self:hit(20, self.x, self.y, object)
                 end
             end
         end
@@ -552,6 +629,15 @@ function Player:update(dt)
         end
     end
 
+    if self.cycle_attack_timer > 0 then
+        self.cycle_attack_timer = self.cycle_attack_timer - dt
+        if self.cycle_attack_timer <= 0 then
+            self.cycle_attack_timer = self.cycle_attack_interval
+            local chosen_attack = table.random(self.possible_attacks) 
+            self:setAttack(chosen_attack)
+            self.area:addGameObject('InfoText', self.x, self.y, {text = "ATK " .. chosen_attack, color = attacks[chosen_attack].color})
+        end
+    end
 
     if self.increased_cycle_speed_while_boosting then self.cycle_speed_multiplayer:increase(100) end
     self.cycle_timer = self.cycle_timer + dt
@@ -564,9 +650,17 @@ function Player:update(dt)
     if self.projectile_speed_inhibiting then self.projectile_speed_mutliplier:decrease(50) end
     self.projectile_speed_mutliplier:update(dt)
 
+    if self.ammo_to_attack_speed > 0 then
+        self.attack_speed_multiplier:increase((self.ammo_to_attack_speed / 100) * (self.max_ammo - 100))
+    end
+    if self.movespeed_to_attack_speed > 0 then
+        local increase = self.max_vel - self.base_max_vel
+        self.attack_speed_multiplier:increase((self.movespeed_to_attack_speed / 100) * (increase))
+    end
     if self.inside_haste_area then self.attack_speed_multiplier:increase(100) end
     if self.attack_speed_boosting then self.attack_speed_multiplier:increase(100) end
     self.attack_speed_multiplier:update(dt)
+
     self.shoot_timer = self.shoot_timer + dt
     if self.shoot_timer > self.shoot_cooldown/self.attack_speed_multiplier.value then
         self.shoot_timer = 0
@@ -576,6 +670,7 @@ function Player:update(dt)
             self.area:addGameObject('InfoText', self.x, self.y, {text = 'Double Attack!', color = ammo_color})
         end
     end
+
 
     self.boost = math.min(self.boost + 10 * dt * self.boost_recharge_rate_mutliplier, self.max_boost)
     if not self.can_boost then
@@ -703,6 +798,11 @@ function Player:die()
     self.timer:cancel("es_amount")
 
     self.dead = true
+
+    if self.gain_sp_on_death then
+        SP = SP + 20
+        self.area:addGameObject('InfoText', self.x, self.y, {text = '+20 SP!', color = skill_point_color})
+    end
 
     self:spawnParticles()
     --for i = 1, love.math.random(8, 12) do
@@ -909,13 +1009,19 @@ function Player:spawnProjectile(atk, rot, dis, mods, vel_mp)
     local bounce = mods.bounce or 0
     if bounce > 0 then bounce = bounce + self.additional_bounce_projectiles end
     
+    local speed_increase = 0
+    if self.movespeed_to_projectile_speed > 0 then
+        local increase = self.max_vel - self.base_max_vel
+        speed_increase = (self.movespeed_to_attack_speed / 100) * increase
+    end
+
     self.area:addGameObject("Projectile", 
     self.x + dis * math.cos(rot), 
     self.y + dis * math.sin(rot), 
     {
         r = rot or 0, 
         attack = atk, 
-        v = 200 * (vel_mp or 1),
+        v = (200 + speed_increase) * (vel_mp or 1),
         modulate = attacks[atk].color,
         bounce = bounce,
         split_children = split_children,

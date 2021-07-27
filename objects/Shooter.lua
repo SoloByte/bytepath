@@ -90,11 +90,13 @@ end
 
 function Shooter:die()
     self.dead = true
-    self.area:addGameObject("Ammo", self.x, self.y)
     if current_room.player then
-        if current_room.player.chances.drop_double_ammo_chance:next() then
+        if not current_room.player.no_ammo_drop then
             self.area:addGameObject("Ammo", self.x, self.y)
-            self.area:addGameObject('InfoText', self.x, self.y, {text = 'Double Ammo!', color = ammo_color})
+            if current_room.player.chances.drop_double_ammo_chance:next() then
+                self.area:addGameObject("Ammo", self.x, self.y)
+                self.area:addGameObject('InfoText', self.x, self.y, {text = 'Double Ammo!', color = ammo_color})
+            end
         end
     end
     self.area:addGameObject("EnemyDeathEffect", self.x, self.y, {color = hp_color, w = self.w * 3})
