@@ -48,5 +48,6 @@ SCORE_POINTS = {
     SKILLPOINT = 250,
     ATTACK = 500,
     ROCK = 100,
-    SHOOTER = 150
+    SHOOTER = 150,
+    BIGROCK = 125
 }

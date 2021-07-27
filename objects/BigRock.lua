@@ -1,30 +1,30 @@
-Rock = GameObject:extend()
+BigRock = GameObject:extend()
 
 
-function Rock:new(area, x,y,opts)
-    Rock.super.new(self,area,x,y,opts)
+function BigRock:new(area, x,y,opts)
+    BigRock.super.new(self,area,x,y,opts)
 
     self.group = "enemy"
     
-    local direction = opts.spawn_direction or table.random({-1, 1})
-    self.x = opts.spawn_x or (gw * 0.5 + direction * (gw * 0.5 + 48))
-    self.y = opts.spawn_y or (random(16, gh - 16))
+    self.direction = table.random({-1, 1})
+    self.x = gw * 0.5 + self.direction * (gw * 0.5 + 48)
+    self.y = random(16, gh - 16)
 
-    self.w, self.h = 8, 8
-    self.collider = self.area.world:newPolygonCollider(createIrregularPolygon(8, 8))
+    self.w, self.h = 18, 18
+    self.collider = self.area.world:newPolygonCollider(createIrregularPolygon(self.w, 8))
     self.collider:setPosition(self.x, self.y)
     self.collider:setObject(self)
     self.collider:setCollisionClass("Enemy")
     self.collider:setFixedRotation(false)
-    self.v = -direction * random(20, 40)
+    self.v = -self.direction * random(15, 25)
     self.collider:setLinearVelocity(self.v, 0)
     self.collider:applyAngularImpulse(random(-100, 100))
 
-    self.hp = 100
+    self.hp = 300
 
 end
 
-function Rock:hit(damage)
+function BigRock:hit(damage)
     if self.dead then return end
     local dmg = damage or 100
     self.hp = self.hp - dmg
@@ -39,12 +39,12 @@ function Rock:hit(damage)
     end)
 end
 
-function Rock:update(dt)
-    Rock.super.update(self, dt)
+function BigRock:update(dt)
+    BigRock.super.update(self, dt)
     self.collider:setLinearVelocity(self.v, 0)
 end
 
-function Rock:draw()
+function BigRock:draw()
     if self.hit_flash then
         love.graphics.setColor(default_color)
     else
@@ -56,11 +56,11 @@ function Rock:draw()
     love.graphics.setColor(default_color)
 end
 
-function Rock:destroy()
-    Rock.super.destroy(self)
+function BigRock:destroy()
+    BigRock.super.destroy(self)
 end
 
-function Rock:die()
+function BigRock:die()
     self.dead = true
     if current_room.player then
         if not current_room.player.no_ammo_drop then
@@ -71,7 +71,14 @@ function Rock:die()
             end
         end
     end
+
+    for i = 1, 4 do
+        local x = self.x + random(-20, 20)
+        local y = self.y + random(-20, 20)
+        self.area:addGameObject("Rock", 0, 0, {spawn_x = x, spawn_y = y, spawn_direction = self.direction})
+    end
+
     self.area:addGameObject("EnemyDeathEffect", self.x, self.y, {color = hp_color, w = self.w * 3})
-    current_room:increaseScore(SCORE_POINTS.ROCK)
-    --self.area:addGameObject("InfoText", self.x, self.y, {text = "+Rock", color = boost_color, w = self.w, h = self.h})
+    current_room:increaseScore(SCORE_POINTS.BIGROCK)
+    --self.area:addGameObject("InfoText", self.x, self.y, {text = "+BigRock", color = boost_color, w = self.w, h = self.h})
 end

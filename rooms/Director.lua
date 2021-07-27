@@ -29,17 +29,20 @@ function Director:new(stage)
     self.enemy_to_points = {
         ["Rock"] = 1,
         ["Shooter"] = 2,
+        ["BigRock"] = 3,
     }
 
     self.enemy_spawn_chances = {}
-    self.enemy_spawn_chances[1] = chanceList({"Rock", 1})
-    self.enemy_spawn_chances[2] = chanceList({"Rock", 8}, {"Shooter", 4})
-    self.enemy_spawn_chances[3] = chanceList({"Rock", 8}, {"Shooter", 8})
-    self.enemy_spawn_chances[4] = chanceList({"Rock", 4}, {"Shooter", 8})
+    self.enemy_spawn_chances[1] = chanceList({"BigRock", 1})
+    --self.enemy_spawn_chances[1] = chanceList({"Rock", 1})
+    self.enemy_spawn_chances[2] = chanceList({"Rock", 8}, {"BigRock", 4})
+    self.enemy_spawn_chances[3] = chanceList({"Rock", 8}, {"Shooter", 4}, {"BigRock", 2})
+    self.enemy_spawn_chances[4] = chanceList({"Rock", 2}, {"Shooter", 8}, {"BigRock", 4})
     for i = 5, 1024 do
         self.enemy_spawn_chances[i] = chanceList(
             {"Rock", random(2, 12)},
-            {"Shooter", random(2, 12)}
+            {"Shooter", random(2, 12)},
+            {"BigRock", random(1, 6)}
         )
     end
     
