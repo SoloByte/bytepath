@@ -51,4 +51,5 @@ SCORE_POINTS = {
     SHOOTER = 150,
     BIGROCK = 125,
     WAVER = 175,
+    SEEKER = 200,
 }

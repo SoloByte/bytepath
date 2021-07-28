@@ -258,7 +258,7 @@ function Player:new(area, x, y, opts)
 
 
     self:setAttack(start_attack)
-    --self:setAttack("Explode")
+    --self:setAttack("Laser")
 end
 
 function Player:setStats()

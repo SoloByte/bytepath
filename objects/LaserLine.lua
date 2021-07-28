@@ -28,13 +28,20 @@ end
 
 function LaserLine:query()
     --local w_half = self.w * 0.5
-    local world = self.area.world.box2d_world
+    --local world = self.area.world.box2d_world
     
     local cx, cy = self.x - 16 * math.cos(self.r), self.y - 16 * math.sin(self.r)
-    local xr, yr = cx + self.gap * math.cos(self.r - math.pi * 0.5), cy + self.gap * math.sin(self.r - math.pi * 0.5)
-    local xl, yl = cx + self.gap * math.cos(self.r + math.pi * 0.5), cy + self.gap * math.sin(self.r + math.pi * 0.5)
-    local targets
+    local dx, dy = cx + self.d * math.cos(self.r), cy + self.d * math.sin(self.r)
+    --local xr, yr = cx + self.gap * math.cos(self.r - math.pi * 0.5), cy + self.gap * math.sin(self.r - math.pi * 0.5)
+    --local xl, yl = cx + self.gap * math.cos(self.r + math.pi * 0.5), cy + self.gap * math.sin(self.r + math.pi * 0.5)
+    
 
+    local x1, y1 = cx + self.gap * math.cos(self.r - math.pi * 0.5), cy + self.gap * math.sin(self.r - math.pi * 0.5)
+    local x2, y2 = cx + self.gap * math.cos(self.r + math.pi * 0.5), cy + self.gap * math.sin(self.r + math.pi * 0.5)
+    local x3, y3 = dx + self.gap * math.cos(self.r + math.pi * 0.5), dy + self.gap * math.sin(self.r + math.pi * 0.5)
+    local x4, y4 = dx + self.gap * math.cos(self.r - math.pi * 0.5), dy + self.gap * math.sin(self.r - math.pi * 0.5)
+    local targets = self.area.world:queryPolygonArea({x1,y1,x2,y2,x3,y3,x4,y4}, {"Enemy", "EnemyProjectile"})
+--[[
     world:rayCast(xl, yl, xl + self.d * math.cos(self.r), yl + self.d * math.sin(self.r), function (fixture, x, y, xn, yn, fraction)
         
         print("Collider: ", fixture)
@@ -56,7 +63,7 @@ function LaserLine:query()
         xr, yr, 
         xr + self.d * math.cos(self.r), 
         yr + self.d * math.sin(self.r), {"Enemy", "EnemyProjectile"}))
-
+--]]
     for i = 1, #targets do
         local obj = targets[i]:getObject()
         if obj then
